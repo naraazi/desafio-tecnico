@@ -1,224 +1,214 @@
-# Controle de Pagamentos / Transferências
+# Desafio Técnico – Sistema de Controle de Pagamentos
 
-Aplicação Full Stack desenvolvida como parte de um desafio técnico para vaga de Desenvolvedor Full Stack.  
-O projeto inclui backend em **Node.js + TypeScript + TypeORM + MySQL** e frontend em **Next.js + React**.
+Sistema para cadastro e consulta de pagamentos de um cartório, desenvolvido como desafio técnico para vaga de Desenvolvedor Web Pleno.
 
-O sistema permite:
+O projeto é dividido em dois módulos:
 
-- Cadastro de pagamentos
-- Listagem com filtros
-- Edição e exclusão
-- Prevenção automática de duplicidades
-- Visualização clara e organizada dos registros
+- **backend/** – API REST em Node.js + TypeScript + Express + TypeORM + MySQL
+- **frontend/** – Interface web em Next.js (App Router) + React, consumindo a API via `fetch`
+
+> Este README está atualizado para refletir o estado **real** do código do projeto.
 
 ---
 
-## 🚀 Tecnologias Utilizadas
+## Sumário
 
-### **Backend**
+1. Tecnologias utilizadas
+2. Estrutura do projeto
+3. Como rodar o projeto
+4. Modelo de dados
+5. API – Endpoints disponíveis
+6. Frontend – Funcionalidades
+7. Validações e regras de negócio
+8. O que foi implementado
+9. O que eu faria se tivesse mais tempo
+10. Limitações conhecidas
+
+---
+
+## Tecnologias utilizadas
+
+### Backend
 
 - Node.js
 - TypeScript
 - Express
 - TypeORM
 - MySQL
-- ts-node-dev
+- Celebrate / Joi (validações)
 - dotenv
-
-### **Frontend**
-
-- Next.js
-- React
-- Axios
-
----
-
-## 🗄️ Configuração do Banco de Dados
-
-1. Crie o banco:
-
-```sql
-CREATE DATABASE cartorio_payments;
-```
-
-2. No backend, crie o arquivo `.env`:
-
-```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=sua_senha
-DB_NAME=cartorio_payments
-
-PORT=3333
-```
-
----
-
-## 🔧 Como rodar o Backend
-
-```bash
-cd backend
-npm install
-npm run dev
-```
-
-Se estiver tudo certo, aparecerá:
-
-```
-Conectado banco...
-Server running on http://localhost:3333
-```
-
----
-
-## 🖥️ Como rodar o Frontend
-
-```bash
-cd frontend
-npm install
-```
-
-Crie o arquivo `.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3333
-```
-
-Depois:
-
-```bash
-npm run dev
-```
-
-A aplicação ficará disponível em:
-
-```
-http://localhost:3000
-```
-
----
-
-# 📘 Funcionalidades Implementadas
-
-### ✔ Cadastro de pagamentos
-
-Campos: data, tipo, descrição e valor.
-
-### ✔ Listagem de pagamentos
-
-Inclui filtros por:
-
-- Tipo de pagamento
-- Data inicial
-- Data final
-
-### ✔ Edição
-
-Todos os campos podem ser alterados.
-
-### ✔ Exclusão
-
-Remoção direta via botão na tabela.
-
-### ✔ Cadastro e listagem de tipos de pagamento
-
-Área específica para criação e exclusão de tipos.
-
----
-
-# ⚠️ Regra de Não Duplicidade
-
-A aplicação impede o cadastro de dois pagamentos idênticos.  
-Um pagamento é considerado duplicado se possuir:
-
-- A mesma **data** (formatada como `YYYY-MM-DD`)
-- O mesmo **paymentTypeId**
-- A mesma **descrição**
-- A mesma **valor**
-
-Se uma tentativa duplicada ocorrer, a API retorna:
-
-```json
-{
-  "message": "Já existe um pagamento com mesma data, tipo, descrição e valor."
-}
-```
-
-### ✔ Teste realizado com sucesso
-
-- 1ª requisição: **201 Created**
-- 2ª requisição idêntica: **400 Bad Request**
-
-Funciona tanto no Thunder Client quanto no frontend.
-
----
-
-## 📂 Estrutura Geral do Backend
-
-```
-src/
- ├─ controllers/
- ├─ services/
- ├─ entities/
- ├─ database/
- ├─ routes/
- └─ server.ts
-```
-
----
-
-## 🌐 Endpoints Principais
-
-### **Tipos de Pagamento**
-
-| Método | Rota               | Descrição      |
-| ------ | ------------------ | -------------- |
-| GET    | /payment-types     | Lista todos    |
-| POST   | /payment-types     | Cria novo tipo |
-| DELETE | /payment-types/:id | Remove tipo    |
-
-### **Pagamentos**
-
-| Método | Rota          | Descrição           |
-| ------ | ------------- | ------------------- |
-| GET    | /payments     | Lista com filtros   |
-| POST   | /payments     | Cria um pagamento   |
-| PUT    | /payments/:id | Edita um pagamento  |
-| DELETE | /payments/:id | Remove um pagamento |
-
----
-
-## 🧪 Testes Manuais Realizados
-
-### Backend
-
-- Criação de pagamentos
-- Edição e exclusão
-- Filtros funcionais
-- Regra de duplicidade validada
-- Datas normalizadas
-- Relacionamentos funcionando
 
 ### Frontend
 
-- Formulário funcionando
-- Listagem atualizada em tempo real
-- Filtros por tipo e datas
-- Edição e exclusão corretas
-- Integração total com o backend
+- Next.js (App Router)
+- React
+- TypeScript
+- Fetch API (para chamadas HTTP)
+
+> Observação: embora algumas versões anteriores do README mencionassem **Axios**, o frontend atual utiliza **apenas `fetch`** para consumo da API, sem dependência de Axios.
 
 ---
 
-## ✔ Conclusão
+## Estrutura do projeto
 
-O sistema atende **todos os requisitos do desafio técnico**, oferecendo:
+backend/src contendo controllers, services, entities, routes, database, validations.
 
-- Backend sólido e organizado
-- Frontend intuitivo
-- Fluxo completo de CRUD
-- Regra de duplicidade funcionando
-- Banco de dados relacional integrado
-- Código limpo e estruturado
+frontend/app contendo page.tsx e layout.tsx.
 
-Projeto pronto para entrega e avaliação.
+---
+
+## Como rodar o projeto
+
+### Pré-requisitos
+
+- Node.js
+- MySQL
+- npm ou yarn
+
+---
+
+### Configuração do banco de dados
+
+Crie um banco:
+
+CREATE DATABASE cartorio_payments CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+---
+
+### Backend
+
+Crie backend/.env:
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=seu_usuario
+DB_PASS=sua_senha
+DB_NAME=cartorio_payments
+APP_PORT=3333
+
+Rode:
+
+npm install
+npm run dev
+
+---
+
+### Frontend
+
+Crie frontend/.env.local:
+
+NEXT_PUBLIC_API_URL=http://localhost:3333
+
+Rode:
+
+npm install
+npm run dev
+
+---
+
+## Modelo de dados
+
+### PaymentType
+
+- id
+- name
+- createdAt
+- updatedAt
+
+### Payment
+
+- id
+- date
+- paymentTypeId
+- description
+- amount
+- receiptPath (opcional)
+- createdAt
+- updatedAt
+
+---
+
+## API – Endpoints disponíveis
+
+### /payment-types
+
+GET /payment-types  
+POST /payment-types
+
+> OBS: Rota DELETE /payment-types/:id ainda **não** implementada no backend.
+
+---
+
+### /payments
+
+GET /payments  
+GET /payments/:id  
+POST /payments  
+PUT /payments/:id  
+DELETE /payments/:id
+
+Filtros disponíveis no GET /payments:
+
+- paymentTypeId
+- startDate
+- endDate
+
+---
+
+## Frontend – Funcionalidades
+
+- Listagem de pagamentos
+- Filtro por tipo e período
+- Criação e edição de pagamentos
+- Exclusão de pagamentos
+- Carregamento dinâmico dos tipos (somente listagem)
+- Formatação de datas e valores
+
+> OBS: Tela de CRUD para tipos de pagamento ainda **não** existe.
+
+---
+
+## Validações e regras de negócio
+
+- Celebrate/Joi no backend valida:
+  - criação de pagamento
+  - edição de pagamento
+  - filtros de listagem
+  - criação de tipo de pagamento
+- Regras implementadas:
+  - Normalização de data
+  - Normalização de descrição
+  - Normalização do valor
+  - Proibição de pagamentos duplicados (mesma data + tipo + descrição + valor)
+
+---
+
+## O que foi implementado
+
+- API completa de pagamentos (CRUD + filtros)
+- Regra de não-duplicidade
+- Validações com celebrate/Joi
+- Frontend funcional com criação, edição, exclusão e filtros
+- Modelo de dados conforme o LEAD
+- Documentação atualizada deste README
+
+---
+
+## O que eu faria se tivesse mais tempo
+
+- Implementaria CRUD completo de tipos de pagamento (incluindo DELETE e tela dedicada)
+- Criaria página e endpoint de relatório (`/payments/report`) com total por período
+- Adicionaria upload de comprovantes usando Multer
+- Adicionaria Docker e docker-compose para subir ambiente completo
+- Reestruturaria o frontend separando page.tsx em componentes menores
+- Implementaria testes automatizados (Jest ou Vitest)
+- Criaria migrations no TypeORM e removeria `synchronize: true`
+
+---
+
+## Limitações conhecidas
+
+- Backend não valida params de rota (ex.: id em /payments/:id)
+- Falta CRUD completo para tipos
+- Falta área administrativa para gerenciar tipos
+- Falta features diferenciais (Docker, testes, upload, relatórios)
