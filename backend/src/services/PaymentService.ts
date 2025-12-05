@@ -1,5 +1,5 @@
-import { AppDataSource } from "../database/data-source";
 import { Payment } from "../entities/Payment";
+import { getPaymentRepository } from "../repositories/PaymentRepository";
 
 interface CreatePaymentDTO {
   date: string;
@@ -16,7 +16,7 @@ interface UpdatePaymentDTO {
 }
 
 export class PaymentService {
-  private paymentRepository = AppDataSource.getRepository(Payment);
+  private paymentRepository = getPaymentRepository();
 
   // Normaliza a data para o formato YYYY-MM-DD
   private normalizeDate(date: string): string {

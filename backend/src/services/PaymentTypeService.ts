@@ -1,8 +1,8 @@
-import { AppDataSource } from "../database/data-source";
 import { PaymentType } from "../entities/PaymentType";
+import { getPaymentTypeRepository } from "../repositories/PaymentTypeRepository";
 
 export class PaymentTypeService {
-  private repo = AppDataSource.getRepository(PaymentType);
+  private repo = getPaymentTypeRepository();
 
   async create(name: string) {
     const exists = await this.repo.findOne({ where: { name } });
