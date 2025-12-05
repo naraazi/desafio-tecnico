@@ -1,3 +1,4 @@
+import { Not } from "typeorm";
 import { Payment } from "../entities/Payment";
 import { getPaymentRepository } from "../repositories/PaymentRepository";
 
@@ -104,30 +105,57 @@ export class PaymentService {
     return payment;
   }
 
-  async update(id: number, data: UpdatePaymentDTO) {
-    const payment = await this.paymentRepository.findOne({ where: { id } });
+  async update(
+    id: number,
+    data: {
+      date: string;
+      paymentTypeId: number;
+      description: string;
+      amount: number;
+    }
+  ): Promise<Payment> {
+    const paymentRepository = getPaymentRepository();
+
+    const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
       throw new Error("Pagamento não encontrado.");
     }
 
-    const toUpdate: UpdatePaymentDTO = { ...data };
+    // ⚠️ IMPORTANTE: usar a MESMA normalização de data do create
+    // Se já existir this.normalizeDate, use ela. Fica assim:
+    const normalizedDate = this.normalizeDate
+      ? this.normalizeDate(data.date)
+      : data.date; // fallback simples, caso normalizeDate não exista
 
-    if (toUpdate.date) {
-      toUpdate.date = this.normalizeDate(toUpdate.date);
+    const normalizedDescription = data.description.trim();
+    const normalizedAmount = Number(Number(data.amount).toFixed(2));
+
+    // Verificar se já existe OUTRO pagamento com mesma combinação
+    const duplicate = await paymentRepository.findOne({
+      where: {
+        id: Not(id), // ignora o próprio registro
+        date: normalizedDate,
+        paymentTypeId: data.paymentTypeId,
+        description: normalizedDescription,
+        amount: normalizedAmount,
+      },
+    });
+
+    if (duplicate) {
+      throw new Error(
+        "Já existe um pagamento com mesma data, tipo, descrição e valor."
+      );
     }
 
-    if (toUpdate.description) {
-      toUpdate.description = this.normalizeDescription(toUpdate.description);
-    }
+    payment.date = normalizedDate;
+    payment.paymentTypeId = data.paymentTypeId;
+    payment.description = normalizedDescription;
+    payment.amount = normalizedAmount;
 
-    if (typeof toUpdate.amount === "number") {
-      toUpdate.amount = this.normalizeAmount(toUpdate.amount);
-    }
+    await paymentRepository.save(payment);
 
-    Object.assign(payment, toUpdate);
-
-    return this.paymentRepository.save(payment);
+    return payment;
   }
 
   async delete(id: number) {
