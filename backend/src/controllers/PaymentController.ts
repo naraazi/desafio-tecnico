@@ -1,60 +1,74 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { PaymentService } from "../services/PaymentService";
 
-const service = new PaymentService();
+const paymentService = new PaymentService();
 
 export class PaymentController {
-  async create(req: Request, res: Response) {
+  async create(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
     try {
-      const payment = await service.create(req.body);
+      const payment = await paymentService.create(req.body);
       return res.status(201).json(payment);
-    } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+    } catch (err) {
+      next(err);
     }
   }
 
-  async list(req: Request, res: Response) {
-    const { paymentTypeId, startDate, endDate } = req.query;
-
-    const payments = await service.list({
-      paymentTypeId: paymentTypeId ? Number(paymentTypeId) : undefined,
-      startDate: startDate as string | undefined,
-      endDate: endDate as string | undefined,
-    });
-
-    return res.json(payments);
-  }
-
-  async show(req: Request, res: Response) {
-    const { id } = req.params;
-    const payment = await service.findById(Number(id));
-
-    if (!payment) {
-      return res.status(404).json({ message: "Pagamento não encontrado." });
-    }
-
-    return res.json(payment);
-  }
-
-  async update(req: Request, res: Response) {
-    const { id } = req.params;
-
+  async list(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
     try {
-      const payment = await service.update(Number(id), req.body);
+      const payments = await paymentService.list(req.query);
+      return res.json(payments);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async show(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = Number(req.params.id);
+      const payment = await paymentService.findById(id);
       return res.json(payment);
-    } catch (err: any) {
-      return res.status(404).json({ message: err.message });
+    } catch (err) {
+      next(err);
     }
   }
 
-  async delete(req: Request, res: Response) {
-    const { id } = req.params;
-
+  async update(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
     try {
-      await service.delete(Number(id));
+      const id = Number(req.params.id);
+      const payment = await paymentService.update(id, req.body);
+      return res.json(payment);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async delete(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = Number(req.params.id);
+      await paymentService.delete(id);
       return res.status(204).send();
-    } catch (err: any) {
-      return res.status(404).json({ message: err.message });
+    } catch (err) {
+      next(err);
     }
   }
 }

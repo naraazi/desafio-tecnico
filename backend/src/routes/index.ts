@@ -13,29 +13,34 @@ const routes = Router();
 const paymentController = new PaymentController();
 const paymentTypeController = new PaymentTypeController();
 
-routes.get("/payment-types", (req, res) =>
-  paymentTypeController.list(req, res)
-);
-routes.post("/payment-types", createPaymentTypeValidation, (req, res) =>
-  paymentTypeController.create(req, res)
+// Pagamentos
+routes.get("/payments", listPaymentsValidation, (req, res, next) =>
+  paymentController.list(req, res, next)
 );
 
-routes.get("/payments", listPaymentsValidation, (req, res) =>
-  paymentController.list(req, res)
+routes.get("/payments/:id", (req, res, next) =>
+  paymentController.show(req, res, next)
 );
 
-routes.get("/payments/:id", (req, res) => paymentController.show(req, res));
-
-routes.post("/payments", createPaymentValidation, (req, res) =>
-  paymentController.create(req, res)
+routes.post("/payments", createPaymentValidation, (req, res, next) =>
+  paymentController.create(req, res, next)
 );
 
-routes.put("/payments/:id", updatePaymentValidation, (req, res) =>
-  paymentController.update(req, res)
+routes.put("/payments/:id", updatePaymentValidation, (req, res, next) =>
+  paymentController.update(req, res, next)
 );
 
-routes.delete("/payments/:id", (req, res) =>
-  paymentController.delete(req, res)
+routes.delete("/payments/:id", (req, res, next) =>
+  paymentController.delete(req, res, next)
+);
+
+// Tipos de pagamento
+routes.get("/payment-types", (req, res, next) =>
+  paymentTypeController.list(req, res, next)
+);
+
+routes.post("/payment-types", createPaymentTypeValidation, (req, res, next) =>
+  paymentTypeController.create(req, res, next)
 );
 
 export default routes;

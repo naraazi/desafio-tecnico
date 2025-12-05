@@ -1,22 +1,32 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { PaymentTypeService } from "../services/PaymentTypeService";
 
-const service = new PaymentTypeService();
+const paymentTypeService = new PaymentTypeService();
 
 export class PaymentTypeController {
-  async create(req: Request, res: Response) {
-    const { name } = req.body;
-
+  async create(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
     try {
-      const type = await service.create(name);
-      return res.status(201).json(type);
-    } catch (err: any) {
-      return res.status(400).json({ message: err.message });
+      const paymentType = await paymentTypeService.create(req.body);
+      return res.status(201).json(paymentType);
+    } catch (err) {
+      next(err);
     }
   }
 
-  async list(req: Request, res: Response) {
-    const types = await service.list();
-    return res.json(types);
+  async list(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const paymentTypes = await paymentTypeService.list();
+      return res.json(paymentTypes);
+    } catch (err) {
+      next(err);
+    }
   }
 }

@@ -1,19 +1,13 @@
 import { Not } from "typeorm";
 import { Payment } from "../entities/Payment";
 import { getPaymentRepository } from "../repositories/PaymentRepository";
+import { AppError } from "../errors/AppError";
 
 interface CreatePaymentDTO {
   date: string;
   paymentTypeId: number;
   description: string;
   amount: number;
-}
-
-interface UpdatePaymentDTO {
-  date?: string;
-  paymentTypeId?: number;
-  description?: string;
-  amount?: number;
 }
 
 export class PaymentService {
@@ -51,8 +45,9 @@ export class PaymentService {
     });
 
     if (existing) {
-      throw new Error(
-        "Já existe um pagamento com mesma data, tipo, descrição e valor."
+      throw new AppError(
+        "Já existe um pagamento com mesma data, tipo, descrição e valor.",
+        400
       );
     }
 
@@ -119,7 +114,7 @@ export class PaymentService {
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new Error("Pagamento não encontrado.");
+      throw new AppError("Pagamento não encontrado.", 404);
     }
 
     // ⚠️ IMPORTANTE: usar a MESMA normalização de data do create
@@ -143,8 +138,9 @@ export class PaymentService {
     });
 
     if (duplicate) {
-      throw new Error(
-        "Já existe um pagamento com mesma data, tipo, descrição e valor."
+      throw new AppError(
+        "Já existe um pagamento com mesma data, tipo, descrição e valor.",
+        400
       );
     }
 
@@ -162,7 +158,7 @@ export class PaymentService {
     const payment = await this.paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new Error("Pagamento não encontrado.");
+      throw new AppError("Pagamento não encontrado.", 404);
     }
 
     await this.paymentRepository.remove(payment);
