@@ -18,12 +18,24 @@ interface UpdatePaymentDTO {
 export class PaymentService {
   private paymentRepository = AppDataSource.getRepository(Payment);
 
-  async create(data: CreatePaymentDTO) {
-    const { date, paymentTypeId, description, amount } = data;
+  // Normaliza a data para o formato YYYY-MM-DD
+  private normalizeDate(date: string): string {
+    // Se vier "2025-12-05T00:00:00.000Z", corta só os 10 primeiros
+    return date.substring(0, 10);
+  }
 
-    // Regra de não-duplicidade:
+  async create(data: CreatePaymentDTO) {
+    const normalizedDate = this.normalizeDate(data.date);
+    const { paymentTypeId, description, amount } = data;
+
+    // Regra de não-duplicidade usando a data normalizada
     const existing = await this.paymentRepository.findOne({
-      where: { date, paymentTypeId, description, amount },
+      where: {
+        date: normalizedDate,
+        paymentTypeId,
+        description,
+        amount,
+      },
     });
 
     if (existing) {
@@ -32,7 +44,11 @@ export class PaymentService {
       );
     }
 
-    const payment = this.paymentRepository.create(data);
+    const payment = this.paymentRepository.create({
+      ...data,
+      date: normalizedDate,
+    });
+
     return this.paymentRepository.save(payment);
   }
 
@@ -54,13 +70,13 @@ export class PaymentService {
 
     if (filters?.startDate) {
       query.andWhere("payment.date >= :startDate", {
-        startDate: filters.startDate,
+        startDate: this.normalizeDate(filters.startDate),
       });
     }
 
     if (filters?.endDate) {
       query.andWhere("payment.date <= :endDate", {
-        endDate: filters.endDate,
+        endDate: this.normalizeDate(filters.endDate),
       });
     }
 
@@ -82,7 +98,13 @@ export class PaymentService {
       throw new Error("Pagamento não encontrado.");
     }
 
-    Object.assign(payment, data);
+    const toUpdate: UpdatePaymentDTO = { ...data };
+
+    if (toUpdate.date) {
+      toUpdate.date = this.normalizeDate(toUpdate.date);
+    }
+
+    Object.assign(payment, toUpdate);
 
     return this.paymentRepository.save(payment);
   }

@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type React from "react";
 import type { Payment, PaymentType } from "../types/payment";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// formata "2025-12-05" -> "05/12/2025"
+function formatDate(date: string): string {
+  const onlyDate = date.substring(0, 10); // garante YYYY-MM-DD
+  const [year, month, day] = onlyDate.split("-");
+  if (!year || !month || !day) return date;
+  return `${day}/${month}/${year}`;
+}
 
 export default function PaymentsPage() {
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
@@ -133,7 +142,7 @@ export default function PaymentsPage() {
 
   function handleEdit(payment: Payment) {
     setEditingId(payment.id);
-    setFormDate(payment.date);
+    setFormDate(payment.date.substring(0, 10)); // garante formato YYYY-MM-DD
     setFormTypeId(String(payment.paymentTypeId));
     setFormDescription(payment.description);
     setFormAmount(String(payment.amount));
@@ -410,9 +419,7 @@ export default function PaymentsPage() {
               <tbody>
                 {payments.map((p) => (
                   <tr key={p.id}>
-                    <td style={tdStyle}>
-                      {new Date(p.date).toLocaleDateString("pt-BR")}
-                    </td>
+                    <td style={tdStyle}>{formatDate(p.date)}</td>
                     <td style={tdStyle}>
                       {p.paymentType?.name ||
                         paymentTypes.find((t) => t.id === p.paymentTypeId)
