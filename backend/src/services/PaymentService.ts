@@ -20,21 +20,32 @@ export class PaymentService {
 
   // Normaliza a data para o formato YYYY-MM-DD
   private normalizeDate(date: string): string {
-    // Se vier "2025-12-05T00:00:00.000Z", corta só os 10 primeiros
     return date.substring(0, 10);
+  }
+
+  // Remove espaços extras da descrição
+  private normalizeDescription(description: string): string {
+    return description.trim();
+  }
+
+  // Garante valor com 2 casas decimais
+  private normalizeAmount(amount: number): number {
+    return Number(amount.toFixed(2));
   }
 
   async create(data: CreatePaymentDTO) {
     const normalizedDate = this.normalizeDate(data.date);
-    const { paymentTypeId, description, amount } = data;
+    const normalizedDescription = this.normalizeDescription(data.description);
+    const normalizedAmount = this.normalizeAmount(data.amount);
+    const { paymentTypeId } = data;
 
-    // Regra de não-duplicidade usando a data normalizada
+    // Regra de não-duplicidade usando valores normalizados
     const existing = await this.paymentRepository.findOne({
       where: {
         date: normalizedDate,
         paymentTypeId,
-        description,
-        amount,
+        description: normalizedDescription,
+        amount: normalizedAmount,
       },
     });
 
@@ -47,6 +58,8 @@ export class PaymentService {
     const payment = this.paymentRepository.create({
       ...data,
       date: normalizedDate,
+      description: normalizedDescription,
+      amount: normalizedAmount,
     });
 
     return this.paymentRepository.save(payment);
@@ -102,6 +115,14 @@ export class PaymentService {
 
     if (toUpdate.date) {
       toUpdate.date = this.normalizeDate(toUpdate.date);
+    }
+
+    if (toUpdate.description) {
+      toUpdate.description = this.normalizeDescription(toUpdate.description);
+    }
+
+    if (typeof toUpdate.amount === "number") {
+      toUpdate.amount = this.normalizeAmount(toUpdate.amount);
     }
 
     Object.assign(payment, toUpdate);
