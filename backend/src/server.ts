@@ -3,7 +3,7 @@ import { AppDataSource } from "./database/data-source";
 import { app } from "./app";
 import { seedPaymentTypes } from "./database/seeds";
 
-const PORT = 3333;
+const PORT = process.env.APP_PORT ? Number(process.env.APP_PORT) : 3333;
 
 AppDataSource.initialize()
   .then(async () => {
