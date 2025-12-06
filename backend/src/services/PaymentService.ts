@@ -1,6 +1,7 @@
 import { Not } from "typeorm";
 import { Payment } from "../entities/Payment";
 import { getPaymentRepository } from "../repositories/PaymentRepository";
+import { getPaymentTypeRepository } from "../repositories/PaymentTypeRepository";
 import { AppError } from "../errors/AppError";
 
 interface CreatePaymentDTO {
@@ -12,13 +13,14 @@ interface CreatePaymentDTO {
 
 export class PaymentService {
   private paymentRepository = getPaymentRepository();
+  private paymentTypeRepository = getPaymentTypeRepository();
 
   // Normaliza a data para o formato YYYY-MM-DD
   private normalizeDate(date: string): string {
     return date.substring(0, 10);
   }
 
-  // Remove espaços extras da descrição
+  // Remove espacos extras da descricao
   private normalizeDescription(description: string): string {
     return description.trim();
   }
@@ -34,7 +36,14 @@ export class PaymentService {
     const normalizedAmount = this.normalizeAmount(data.amount);
     const { paymentTypeId } = data;
 
-    // Regra de não-duplicidade usando valores normalizados
+    const paymentTypeExists = await this.paymentTypeRepository.findOne({
+      where: { id: paymentTypeId },
+    });
+    if (!paymentTypeExists) {
+      throw new AppError("Tipo de pagamento nao encontrado.", 400);
+    }
+
+    // Regra de nao-duplicidade usando valores normalizados
     const existing = await this.paymentRepository.findOne({
       where: {
         date: normalizedDate,
@@ -46,7 +55,7 @@ export class PaymentService {
 
     if (existing) {
       throw new AppError(
-        "Já existe um pagamento com mesma data, tipo, descrição e valor.",
+        "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
         400
       );
     }
@@ -109,27 +118,27 @@ export class PaymentService {
       amount: number;
     }
   ): Promise<Payment> {
-    const paymentRepository = getPaymentRepository();
-
-    const payment = await paymentRepository.findOne({ where: { id } });
-
-    if (!payment) {
-      throw new AppError("Pagamento não encontrado.", 404);
+    const paymentTypeExists = await this.paymentTypeRepository.findOne({
+      where: { id: data.paymentTypeId },
+    });
+    if (!paymentTypeExists) {
+      throw new AppError("Tipo de pagamento nao encontrado.", 400);
     }
 
-    // ⚠️ IMPORTANTE: usar a MESMA normalização de data do create
-    // Se já existir this.normalizeDate, use ela. Fica assim:
-    const normalizedDate = this.normalizeDate
-      ? this.normalizeDate(data.date)
-      : data.date; // fallback simples, caso normalizeDate não exista
+    const payment = await this.paymentRepository.findOne({ where: { id } });
 
-    const normalizedDescription = data.description.trim();
-    const normalizedAmount = Number(Number(data.amount).toFixed(2));
+    if (!payment) {
+      throw new AppError("Pagamento nao encontrado.", 404);
+    }
 
-    // Verificar se já existe OUTRO pagamento com mesma combinação
-    const duplicate = await paymentRepository.findOne({
+    const normalizedDate = this.normalizeDate(data.date);
+    const normalizedDescription = this.normalizeDescription(data.description);
+    const normalizedAmount = this.normalizeAmount(data.amount);
+
+    // Verificar se ja existe OUTRO pagamento com mesma combinacao
+    const duplicate = await this.paymentRepository.findOne({
       where: {
-        id: Not(id), // ignora o próprio registro
+        id: Not(id), // ignora o proprio registro
         date: normalizedDate,
         paymentTypeId: data.paymentTypeId,
         description: normalizedDescription,
@@ -139,7 +148,7 @@ export class PaymentService {
 
     if (duplicate) {
       throw new AppError(
-        "Já existe um pagamento com mesma data, tipo, descrição e valor.",
+        "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
         400
       );
     }
@@ -149,7 +158,7 @@ export class PaymentService {
     payment.description = normalizedDescription;
     payment.amount = normalizedAmount;
 
-    await paymentRepository.save(payment);
+    await this.paymentRepository.save(payment);
 
     return payment;
   }
@@ -158,7 +167,7 @@ export class PaymentService {
     const payment = await this.paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Pagamento não encontrado.", 404);
+      throw new AppError("Pagamento nao encontrado.", 404);
     }
 
     await this.paymentRepository.remove(payment);
