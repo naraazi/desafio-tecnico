@@ -12,30 +12,30 @@ import { PaymentType } from "./PaymentType";
 @Entity("payments")
 export class Payment {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: "date" })
-  date: string; // pode ser string no modelo, o TypeORM converte para DATE
+  date!: string; // pode ser string no modelo, o TypeORM converte para DATE
 
   @Column()
-  paymentTypeId: number;
+  paymentTypeId!: number;
 
   @ManyToOne(() => PaymentType)
   @JoinColumn({ name: "paymentTypeId" })
-  paymentType: PaymentType;
+  paymentType!: PaymentType;
 
   @Column()
-  description: string;
+  description!: string;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
-  amount: number;
+  amount!: number;
 
   @Column({ nullable: true })
   receiptPath?: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }
