@@ -1,4 +1,4 @@
-# Desafio Tecnico - Sistema de Controle de Pagamentos
+﻿# Desafio Tecnico - Sistema de Controle de Pagamentos
 
 Sistema para cadastro e consulta de pagamentos de um cartorio, desenvolvido como desafio tecnico para vaga de Desenvolvedor Web Pleno.
 
@@ -59,13 +59,15 @@ frontend/app com page.tsx e layout.tsx.
 
 ## Como rodar o projeto
 
-### Pre-requisitos
+### Opcao 1: Ambiente local
+
+#### Pre-requisitos
 
 - Node.js
 - MySQL
 - npm ou yarn
 
-### Configuracao do banco de dados
+#### Configuracao do banco de dados
 
 Crie um banco:
 
@@ -73,7 +75,7 @@ Crie um banco:
 CREATE DATABASE cartorio_payments CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-### Backend
+#### Backend
 
 Crie `backend/.env`:
 
@@ -94,7 +96,7 @@ npm install
 npm run dev
 ```
 
-### Frontend
+#### Frontend
 
 Crie `frontend/.env.local`:
 
@@ -109,6 +111,30 @@ cd frontend
 npm install
 npm run dev
 ```
+
+### Opcao 2: Docker / docker-compose
+
+Pre-requisitos: Docker + Docker Compose instalados.
+
+Como subir:
+```
+docker-compose up -d --build
+```
+
+Urls:
+- Frontend: http://localhost:3000
+- API: http://localhost:3333 (ex.: `curl http://localhost:3333/payment-types`)
+
+Observacoes uteis:
+- MySQL exposto na porta 3307 do host (mapeia para 3306 no container) para evitar conflito com MySQL local.
+- Frontend usa `NEXT_PUBLIC_API_URL=http://localhost:3333`, acessivel pelo navegador.
+- Backend tem um pequeno atraso (sleep) e o healthcheck do MySQL inclui start_period para evitar log de conexão recusada na primeira subida.
+
+Diagnostico:
+- Logs: `docker-compose logs -f backend` e `docker-compose logs -f frontend`
+- Parar/limpar: `docker-compose down` (use `docker-compose down -v` para remover o volume do MySQL)
+
+As variaveis de ambiente usadas no compose ja estao definidas em `docker-compose.yml` (DB_HOST=db, DB_USER=cartorio, DB_PASS=cartorio, DB_NAME=cartorio_payments, NEXT_PUBLIC_API_URL=http://backend:3333). Exemplos de env: `backend/.env.docker.example` e `frontend/.env.local.example`.
 
 ---
 
@@ -252,6 +278,7 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 - Validacoes com celebrate/Joi
 - Frontend com CRUD de pagamentos e CRUD de tipos, filtros e formatacoes
 - Modelo de dados conforme o LEAD
+- Docker/docker-compose para subir ambiente completo
 - README com instrucoes e exemplos de chamadas
 
 ---
@@ -260,7 +287,6 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 
 - Criaria endpoint/pagina de relatorio (`/payments/report`) com total por periodo
 - Adicionaria upload de comprovantes usando Multer
-- Adicionaria Docker e docker-compose para subir ambiente completo
 - Reestruturaria o frontend separando page.tsx em componentes menores
 - Implementaria testes automatizados (Jest ou Vitest)
 - Criaria migrations no TypeORM e removeria `synchronize: true`
@@ -269,7 +295,6 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 
 ## Limitacoes conhecidas
 
-- Sem Docker/docker-compose
 - Sem endpoint/pagina de relatorio
 - Sem upload de comprovante
 - Sem testes automatizados
