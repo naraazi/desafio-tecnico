@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type React from "react";
 import type { Payment, PaymentType } from "../types/payment";
+import styles from "./page.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -250,280 +251,224 @@ export default function PaymentsPage() {
   }
 
   return (
-    <main style={{ padding: "2rem", maxWidth: 1000, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "1.8rem", marginBottom: "1rem" }}>
-        Controle de Pagamentos / Transferências
-      </h1>
-
-      {error && (
-        <div
-          style={{
-            marginBottom: "1rem",
-            padding: "0.75rem 1rem",
-            borderRadius: 4,
-            background: "#ffe5e5",
-            color: "#a30000",
-          }}
-        >
-          {error}
+    <main className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.heroText}>
+          <p className={styles.kicker}>Financeiro</p>
+          <h1 className={styles.heroTitle}>
+            Controle de pagamentos e transferências
+          </h1>
+          <p className={styles.heroSubtitle}>
+            Cartório 1º Ofício de Notas e Registros de Imóveis de Santarém - PA
+          </p>
         </div>
-      )}
-
-      {/* Formulário */}
-      <section
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          padding: "1rem",
-          marginBottom: "2rem",
-        }}
-      >
-        <h2 style={{ marginBottom: "0.75rem" }}>
-          {editingId ? "Editar pagamento" : "Novo pagamento"}
-        </h2>
-
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "0.75rem",
-          }}
-        >
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>Data</label>
-            <input
-              type="date"
-              value={formDate}
-              onChange={(e) => setFormDate(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
-            />
+        <div className={styles.heroCard}>
+          <div className={styles.heroStat}>
+            <span className={styles.heroStatLabel}>Tipos cadastrados</span>
+            <span className={styles.heroStatValue}>{paymentTypes.length}</span>
           </div>
-
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Tipo de pagamento
-            </label>
-            <select
-              value={formTypeId}
-              onChange={(e) => setFormTypeId(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
-            >
-              <option value="">Selecione...</option>
-              {paymentTypes.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
+          <div className={styles.heroStat}>
+            <span className={styles.heroStatLabel}>Pagamentos listados</span>
+            <span className={styles.heroStatValue}>{payments.length}</span>
           </div>
-
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Descrição
-            </label>
-            <input
-              type="text"
-              value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
-              placeholder="Ex: Pagamento de folha - janeiro/2025"
-            />
+          <div className={styles.heroStat}>
+            <span className={styles.heroStatLabel}>Filtros ativos</span>
+            <span className={styles.heroStatValue}>
+              {
+                [filterTypeId, filterStartDate, filterEndDate].filter(Boolean)
+                  .length
+              }
+            </span>
           </div>
-
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>Valor</label>
-            <input
-              type="number"
-              step="0.01"
-              value={formAmount}
-              onChange={(e) => setFormAmount(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
-              placeholder="15000.50"
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "0.5rem",
-              marginTop: "0.5rem",
-            }}
-          >
-            <button
-              type="submit"
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: 4,
-                border: "none",
-                cursor: "pointer",
-                background: "#2563eb",
-                color: "#fff",
-              }}
-            >
-              {editingId ? "Salvar edição" : "Criar pagamento"}
-            </button>
-
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: 4,
-                  border: "1px solid #aaa",
-                  cursor: "pointer",
-                  background: "#fff",
-                }}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
+        </div>
       </section>
 
-      {/* Gerenciar Tipos */}
-      <section
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          padding: "1rem",
-          marginBottom: "2rem",
-        }}
-      >
-        <h2 style={{ marginBottom: "0.75rem" }}>Gerenciar tipos de pagamento</h2>
+      {error && <div className={styles.errorBanner}>{error}</div>}
 
-        <form
-          onSubmit={handlePaymentTypeSubmit}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "0.75rem",
-            marginBottom: "1rem",
-          }}
-        >
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>Nome</label>
-            <input
-              type="text"
-              value={paymentTypeName}
-              onChange={(e) => setPaymentTypeName(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
-              placeholder="Ex: Manutencao predial"
-            />
+      <section className={styles.split}>
+        <section className={`${styles.panel} ${styles.panelAccent}`}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <p className={styles.helperText}>Lançamentos</p>
+              <h2>{editingId ? "Editar pagamento" : "Novo pagamento"}</h2>
+            </div>
+            <span className={styles.badgeLight}>
+              {editingId ? "Editando registro" : "Cadastro rápido"}
+            </span>
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "0.5rem",
-              marginTop: "0.5rem",
-            }}
-          >
-            <button
-              type="submit"
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: 4,
-                border: "none",
-                cursor: "pointer",
-                background: "#2563eb",
-                color: "#fff",
-              }}
-            >
-              {paymentTypeEditingId ? "Salvar tipo" : "Criar tipo"}
-            </button>
-            {paymentTypeEditingId && (
-              <button
-                type="button"
-                onClick={resetPaymentTypeForm}
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: 4,
-                  border: "1px solid #aaa",
-                  cursor: "pointer",
-                  background: "#fff",
-                }}
+
+          <form onSubmit={handleSubmit} className={styles.formGrid}>
+            <div className={styles.field}>
+              <label className={styles.label}>Data</label>
+              <input
+                className={styles.input}
+                type="date"
+                value={formDate}
+                onChange={(e) => setFormDate(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Tipo de pagamento</label>
+              <select
+                className={styles.input}
+                value={formTypeId}
+                onChange={(e) => setFormTypeId(e.target.value)}
               >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
-
-        {loadingPaymentTypes ? (
-          <p>Carregando tipos...</p>
-        ) : paymentTypes.length === 0 ? (
-          <p>Nenhum tipo cadastrado.</p>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.95rem",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th style={thStyle}>Nome</th>
-                  <th style={thStyle}>Acoes</th>
-                </tr>
-              </thead>
-              <tbody>
+                <option value="">Selecione...</option>
                 {paymentTypes.map((type) => (
-                  <tr key={type.id}>
-                    <td style={tdStyle}>{type.name}</td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => handlePaymentTypeEdit(type)}
-                        style={smallBtn("#2563eb", "#fff")}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handlePaymentTypeDelete(type.id)}
-                        style={smallBtn("#dc2626", "#fff")}
-                      >
-                        Excluir
-                      </button>
-                    </td>
-                  </tr>
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
                 ))}
-              </tbody>
-            </table>
+              </select>
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Descrição</label>
+              <input
+                className={styles.input}
+                type="text"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Ex: Pagamento de folha - janeiro/2025"
+              />
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label}>Valor</label>
+              <input
+                className={styles.input}
+                type="number"
+                step="0.01"
+                value={formAmount}
+                onChange={(e) => setFormAmount(e.target.value)}
+                placeholder="15000.50"
+              />
+            </div>
+
+            <div className={styles.actions}>
+              <button
+                type="submit"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+              >
+                {editingId ? "Salvar edição" : "Criar pagamento"}
+              </button>
+
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </form>
+        </section>
+
+        {/* Gerenciar Tipos */}
+        <section className={styles.panel}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <p className={styles.helperText}>Tipos de pagamento</p>
+              <h2>Gerenciar tipos</h2>
+            </div>
+            <span className={styles.badgeLight}>Auxiliar</span>
           </div>
-        )}
+
+          <form
+            onSubmit={handlePaymentTypeSubmit}
+            className={`${styles.formGrid} ${styles.filters}`}
+          >
+            <div className={styles.field}>
+              <label className={styles.label}>Nome</label>
+              <input
+                className={styles.input}
+                type="text"
+                value={paymentTypeName}
+                onChange={(e) => setPaymentTypeName(e.target.value)}
+                placeholder="Ex: Manutenção predial"
+              />
+            </div>
+            <div className={styles.actions}>
+              <button
+                type="submit"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+              >
+                {paymentTypeEditingId ? "Salvar tipo" : "Criar tipo"}
+              </button>
+              {paymentTypeEditingId && (
+                <button
+                  type="button"
+                  onClick={resetPaymentTypeForm}
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                >
+                  Cancelar
+                </button>
+              )}
+            </div>
+          </form>
+
+          {loadingPaymentTypes ? (
+            <p className={styles.loading}>Carregando tipos...</p>
+          ) : paymentTypes.length === 0 ? (
+            <p className={styles.empty}>Nenhum tipo cadastrado.</p>
+          ) : (
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentTypes.map((type) => (
+                    <tr key={type.id}>
+                      <td>{type.name}</td>
+                      <td>
+                        <div className={styles.actions}>
+                          <button
+                            onClick={() => handlePaymentTypeEdit(type)}
+                            className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handlePaymentTypeDelete(type.id)}
+                            className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </section>
 
       {/* Filtros */}
-      <section
-        style={{
-          border: "1px solid #ddd",
-          borderRadius: 8,
-          padding: "1rem",
-          marginBottom: "1rem",
-        }}
-      >
-        <h2 style={{ marginBottom: "0.75rem" }}>Filtros</h2>
-        <form
-          onSubmit={handleApplyFilters}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: "0.75rem",
-          }}
-        >
+      <section className={styles.panel}>
+        <div className={styles.sectionHeader}>
           <div>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Tipo de pagamento
-            </label>
+            <p className={styles.helperText}>Explorar</p>
+            <h2>Filtros</h2>
+          </div>
+          <span className={styles.badgeLight}>Busca refinada</span>
+        </div>
+        <form onSubmit={handleApplyFilters} className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label}>Tipo de pagamento</label>
             <select
+              className={styles.input}
               value={filterTypeId}
               onChange={(e) => setFilterTypeId(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
             >
               <option value="">Todos</option>
               {paymentTypes.map((type) => (
@@ -534,48 +479,30 @@ export default function PaymentsPage() {
             </select>
           </div>
 
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Data inicial
-            </label>
+          <div className={styles.field}>
+            <label className={styles.label}>Data inicial</label>
             <input
+              className={styles.input}
               type="date"
               value={filterStartDate}
               onChange={(e) => setFilterStartDate(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              Data final
-            </label>
+          <div className={styles.field}>
+            <label className={styles.label}>Data final</label>
             <input
+              className={styles.input}
               type="date"
               value={filterEndDate}
               onChange={(e) => setFilterEndDate(e.target.value)}
-              style={{ width: "100%", padding: 6 }}
             />
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              gap: "0.5rem",
-              marginTop: "0.5rem",
-            }}
-          >
+          <div className={styles.actions}>
             <button
               type="submit"
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: 4,
-                border: "none",
-                cursor: "pointer",
-                background: "#16a34a",
-                color: "#fff",
-              }}
+              className={`${styles.btn} ${styles.btnPrimary}`}
             >
               Aplicar filtros
             </button>
@@ -584,61 +511,65 @@ export default function PaymentsPage() {
       </section>
 
       {/* Tabela */}
-      <section>
-        <h2 style={{ marginBottom: "0.75rem" }}>Pagamentos</h2>
+      <section className={styles.panel}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.helperText}>Visão geral</p>
+            <h2>Pagamentos</h2>
+          </div>
+          <span className={styles.badgeLight}>
+            {loadingPayments ? "Atualizando" : "Dados listados"}
+          </span>
+        </div>
 
         {loadingPayments ? (
-          <p>Carregando pagamentos...</p>
+          <p className={styles.loading}>Carregando pagamentos...</p>
         ) : payments.length === 0 ? (
-          <p>Nenhum pagamento encontrado.</p>
+          <p className={styles.empty}>Nenhum pagamento encontrado.</p>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.95rem",
-              }}
-            >
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
               <thead>
                 <tr>
-                  <th style={thStyle}>Data</th>
-                  <th style={thStyle}>Tipo</th>
-                  <th style={thStyle}>Descrição</th>
-                  <th style={thStyle}>Valor</th>
-                  <th style={thStyle}>Ações</th>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {payments.map((p) => (
                   <tr key={p.id}>
-                    <td style={tdStyle}>{formatDate(p.date)}</td>
-                    <td style={tdStyle}>
+                    <td>{formatDate(p.date)}</td>
+                    <td>
                       {p.paymentType?.name ||
                         paymentTypes.find((t) => t.id === p.paymentTypeId)
                           ?.name ||
                         "-"}
                     </td>
-                    <td style={tdStyle}>{p.description}</td>
-                    <td style={tdStyle}>
+                    <td>{p.description}</td>
+                    <td>
                       {Number(p.amount).toLocaleString("pt-BR", {
                         style: "currency",
                         currency: "BRL",
                       })}
                     </td>
-                    <td style={tdStyle}>
-                      <button
-                        onClick={() => handleEdit(p)}
-                        style={smallBtn("#2563eb", "#fff")}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p.id)}
-                        style={smallBtn("#dc2626", "#fff")}
-                      >
-                        Excluir
-                      </button>
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() => handleEdit(p)}
+                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(p.id)}
+                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -649,27 +580,4 @@ export default function PaymentsPage() {
       </section>
     </main>
   );
-}
-
-const thStyle: React.CSSProperties = {
-  borderBottom: "1px solid #ddd",
-  textAlign: "left",
-  padding: "0.5rem",
-};
-
-const tdStyle: React.CSSProperties = {
-  borderBottom: "1px solid #eee",
-  padding: "0.5rem",
-};
-
-function smallBtn(bg: string, color: string): React.CSSProperties {
-  return {
-    padding: "0.25rem 0.5rem",
-    marginRight: "0.25rem",
-    borderRadius: 4,
-    border: "none",
-    cursor: "pointer",
-    background: bg,
-    color,
-  };
 }
