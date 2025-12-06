@@ -106,6 +106,11 @@ export class PaymentService {
       where: { id },
       relations: ["paymentType"],
     });
+
+    if (!payment) {
+      throw new AppError("Pagamento não encontrado.", 404);
+    }
+
     return payment;
   }
 
