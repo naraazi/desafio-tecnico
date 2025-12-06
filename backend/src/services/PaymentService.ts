@@ -108,7 +108,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new AppError("Pagamento não encontrado.", 404);
+      throw new AppError("Pagamento nao encontrado.", 404);
     }
 
     return payment;

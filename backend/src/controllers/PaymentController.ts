@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { PaymentService } from "../services/PaymentService";
+import { AppError } from "../errors/AppError";
 
 const paymentService = new PaymentService();
 
@@ -38,6 +39,10 @@ export class PaymentController {
     try {
       const id = Number(req.params.id);
       const payment = await paymentService.findById(id);
+      // seguranca extra, embora o service ja lance 404
+      if (!payment) {
+        throw new AppError("Pagamento nao encontrado.", 404);
+      }
       return res.json(payment);
     } catch (err) {
       next(err);
