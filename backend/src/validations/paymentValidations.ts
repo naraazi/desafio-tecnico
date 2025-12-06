@@ -15,6 +15,12 @@ export const updatePaymentValidation = celebrate({
     paymentTypeId: Joi.number().integer().optional(),
     description: Joi.string().min(3).optional(),
     amount: Joi.number().positive().optional(),
+  }).or("date", "paymentTypeId", "description", "amount"), // exige pelo menos um campo
+});
+
+export const paymentIdParamValidation = celebrate({
+  [Segments.PARAMS]: Joi.object({
+    id: Joi.number().integer().positive().required(),
   }),
 });
 

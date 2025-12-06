@@ -5,6 +5,7 @@ import {
   createPaymentValidation,
   listPaymentsValidation,
   updatePaymentValidation,
+  paymentIdParamValidation,
 } from "../validations/paymentValidations";
 import { createPaymentTypeValidation } from "../validations/paymentTypeValidations";
 
@@ -18,7 +19,7 @@ routes.get("/payments", listPaymentsValidation, (req, res, next) =>
   paymentController.list(req, res, next)
 );
 
-routes.get("/payments/:id", (req, res, next) =>
+routes.get("/payments/:id", paymentIdParamValidation, (req, res, next) =>
   paymentController.show(req, res, next)
 );
 
@@ -26,11 +27,14 @@ routes.post("/payments", createPaymentValidation, (req, res, next) =>
   paymentController.create(req, res, next)
 );
 
-routes.put("/payments/:id", updatePaymentValidation, (req, res, next) =>
-  paymentController.update(req, res, next)
+routes.put(
+  "/payments/:id",
+  paymentIdParamValidation,
+  updatePaymentValidation,
+  (req, res, next) => paymentController.update(req, res, next)
 );
 
-routes.delete("/payments/:id", (req, res, next) =>
+routes.delete("/payments/:id", paymentIdParamValidation, (req, res, next) =>
   paymentController.delete(req, res, next)
 );
 
