@@ -197,6 +197,22 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 - DELETE /payments/:id  
   Exemplo: `curl -X DELETE http://localhost:3333/payments/1`
 
+### Exemplos de erros
+
+- FK inexistente em pagamento (400):
+  ```bash
+  curl -X POST http://localhost:3333/payments \
+    -H "Content-Type: application/json" \
+    -d '{"date":"2025-02-01","paymentTypeId":9999,"description":"Teste FK","amount":100}'
+  ```
+
+- Pagamento duplicado (400): envie duas vezes o mesmo corpo normalizado (mesma data, tipo, descricao e valor).
+  ```bash
+  curl -X POST http://localhost:3333/payments \
+    -H "Content-Type: application/json" \
+    -d '{"date":"2025-02-01","paymentTypeId":1,"description":"Duplicado","amount":50}'
+  ```
+
 ---
 
 ## Frontend - Funcionalidades
