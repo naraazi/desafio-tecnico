@@ -12,9 +12,6 @@ interface CreatePaymentDTO {
 }
 
 export class PaymentService {
-  private paymentRepository = getPaymentRepository();
-  private paymentTypeRepository = getPaymentTypeRepository();
-
   private normalizeDate(date: string): string {
     return date.substring(0, 10);
   }
@@ -28,19 +25,22 @@ export class PaymentService {
   }
 
   async create(data: CreatePaymentDTO) {
+    const paymentRepository = getPaymentRepository();
+    const paymentTypeRepository = getPaymentTypeRepository();
+
     const normalizedDate = this.normalizeDate(data.date);
     const normalizedDescription = this.normalizeDescription(data.description);
     const normalizedAmount = this.normalizeAmount(data.amount);
     const { paymentTypeId } = data;
 
-    const paymentTypeExists = await this.paymentTypeRepository.findOne({
+    const paymentTypeExists = await paymentTypeRepository.findOne({
       where: { id: paymentTypeId },
     });
     if (!paymentTypeExists) {
       throw new AppError("Tipo de pagamento nao encontrado.", 400);
     }
 
-    const existing = await this.paymentRepository.findOne({
+    const existing = await paymentRepository.findOne({
       where: {
         date: normalizedDate,
         paymentTypeId,
@@ -56,14 +56,14 @@ export class PaymentService {
       );
     }
 
-    const payment = this.paymentRepository.create({
+    const payment = paymentRepository.create({
       ...data,
       date: normalizedDate,
       description: normalizedDescription,
       amount: normalizedAmount,
     });
 
-    return this.paymentRepository.save(payment);
+    return paymentRepository.save(payment);
   }
 
   async list(filters?: {
@@ -71,7 +71,9 @@ export class PaymentService {
     startDate?: string;
     endDate?: string;
   }) {
-    const query = this.paymentRepository
+    const paymentRepository = getPaymentRepository();
+
+    const query = paymentRepository
       .createQueryBuilder("payment")
       .leftJoinAndSelect("payment.paymentType", "paymentType")
       .orderBy("payment.date", "DESC");
@@ -98,7 +100,9 @@ export class PaymentService {
   }
 
   async findById(id: number) {
-    const payment = await this.paymentRepository.findOne({
+    const paymentRepository = getPaymentRepository();
+
+    const payment = await paymentRepository.findOne({
       where: { id },
       relations: ["paymentType"],
     });
@@ -119,7 +123,10 @@ export class PaymentService {
       amount?: number;
     }
   ): Promise<Payment> {
-    const payment = await this.paymentRepository.findOne({ where: { id } });
+    const paymentRepository = getPaymentRepository();
+    const paymentTypeRepository = getPaymentTypeRepository();
+
+    const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
       throw new AppError("Pagamento nao encontrado.", 404);
@@ -141,7 +148,7 @@ export class PaymentService {
         : payment.paymentTypeId;
 
     if (typeof data.paymentTypeId === "number") {
-      const paymentTypeExists = await this.paymentTypeRepository.findOne({
+      const paymentTypeExists = await paymentTypeRepository.findOne({
         where: { id: data.paymentTypeId },
       });
       if (!paymentTypeExists) {
@@ -149,7 +156,7 @@ export class PaymentService {
       }
     }
 
-    const duplicate = await this.paymentRepository.findOne({
+    const duplicate = await paymentRepository.findOne({
       where: {
         id: Not(id), // ignora o proprio registro
         date: normalizedDate,
@@ -171,18 +178,19 @@ export class PaymentService {
     payment.description = normalizedDescription;
     payment.amount = normalizedAmount;
 
-    await this.paymentRepository.save(payment);
+    await paymentRepository.save(payment);
 
     return payment;
   }
 
   async delete(id: number) {
-    const payment = await this.paymentRepository.findOne({ where: { id } });
+    const paymentRepository = getPaymentRepository();
+    const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
       throw new AppError("Pagamento nao encontrado.", 404);
     }
 
-    await this.paymentRepository.remove(payment);
+    await paymentRepository.remove(payment);
   }
 }
