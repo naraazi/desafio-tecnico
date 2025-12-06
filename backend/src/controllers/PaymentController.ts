@@ -39,7 +39,6 @@ export class PaymentController {
     try {
       const id = Number(req.params.id);
       const payment = await paymentService.findById(id);
-      // seguranca extra, embora o service ja lance 404
       if (!payment) {
         throw new AppError("Pagamento nao encontrado.", 404);
       }

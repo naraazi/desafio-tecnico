@@ -15,17 +15,14 @@ export class PaymentService {
   private paymentRepository = getPaymentRepository();
   private paymentTypeRepository = getPaymentTypeRepository();
 
-  // Normaliza a data para o formato YYYY-MM-DD
   private normalizeDate(date: string): string {
     return date.substring(0, 10);
   }
 
-  // Remove espacos extras da descricao
   private normalizeDescription(description: string): string {
     return description.trim();
   }
 
-  // Garante valor com 2 casas decimais
   private normalizeAmount(amount: number): number {
     return Number(amount.toFixed(2));
   }
@@ -43,7 +40,6 @@ export class PaymentService {
       throw new AppError("Tipo de pagamento nao encontrado.", 400);
     }
 
-    // Regra de nao-duplicidade usando valores normalizados
     const existing = await this.paymentRepository.findOne({
       where: {
         date: normalizedDate,
@@ -140,7 +136,6 @@ export class PaymentService {
     const normalizedDescription = this.normalizeDescription(data.description);
     const normalizedAmount = this.normalizeAmount(data.amount);
 
-    // Verificar se ja existe OUTRO pagamento com mesma combinacao
     const duplicate = await this.paymentRepository.findOne({
       where: {
         id: Not(id), // ignora o proprio registro

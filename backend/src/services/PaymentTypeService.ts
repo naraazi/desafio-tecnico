@@ -9,24 +9,20 @@ interface CreatePaymentTypeDTO {
 export class PaymentTypeService {
   async create(data: CreatePaymentTypeDTO): Promise<PaymentType> {
     const paymentTypeRepository = getPaymentTypeRepository();
-
-    // Normaliza o nome (tira espaços e garante consistência)
     const normalizedName = data.name.trim();
 
     if (!normalizedName) {
-      throw new AppError("Nome do tipo de pagamento é obrigatório.", 400);
+      throw new AppError("Nome do tipo de pagamento e obrigatorio.", 400);
     }
 
-    // Verifica se já existe um tipo com esse nome exato
     const existing = await paymentTypeRepository.findOne({
       where: { name: normalizedName },
     });
 
     if (existing) {
-      throw new AppError("Já existe um tipo de pagamento com esse nome.", 400);
+      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 400);
     }
 
-    // Cria o registro com o nome normalizado
     const paymentType = paymentTypeRepository.create({
       name: normalizedName,
     });
@@ -51,12 +47,12 @@ export class PaymentTypeService {
     const normalizedName = data.name.trim();
 
     if (!normalizedName) {
-      throw new AppError("Nome do tipo de pagamento é obrigatório.", 400);
+      throw new AppError("Nome do tipo de pagamento e obrigatorio.", 400);
     }
 
     const paymentType = await paymentTypeRepository.findOne({ where: { id } });
     if (!paymentType) {
-      throw new AppError("Tipo de pagamento não encontrado.", 404);
+      throw new AppError("Tipo de pagamento nao encontrado.", 404);
     }
 
     const duplicate = await paymentTypeRepository.findOne({
@@ -64,7 +60,7 @@ export class PaymentTypeService {
     });
 
     if (duplicate && duplicate.id !== id) {
-      throw new AppError("Já existe um tipo de pagamento com esse nome.", 400);
+      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 400);
     }
 
     paymentType.name = normalizedName;
@@ -78,7 +74,7 @@ export class PaymentTypeService {
 
     const paymentType = await paymentTypeRepository.findOne({ where: { id } });
     if (!paymentType) {
-      throw new AppError("Tipo de pagamento não encontrado.", 404);
+      throw new AppError("Tipo de pagamento nao encontrado.", 404);
     }
 
     await paymentTypeRepository.remove(paymentType);
