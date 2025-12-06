@@ -343,7 +343,7 @@ export default function PaymentsPage() {
                 step="0.01"
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
-                placeholder="15000.50"
+                placeholder="3,500"
               />
             </div>
 
