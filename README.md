@@ -1,28 +1,29 @@
-# Desafio Técnico – Sistema de Controle de Pagamentos
+# Desafio Tecnico - Sistema de Controle de Pagamentos
 
-Sistema para cadastro e consulta de pagamentos de um cartório, desenvolvido como desafio técnico para vaga de Desenvolvedor Web Pleno.
+Sistema para cadastro e consulta de pagamentos de um cartorio, desenvolvido como desafio tecnico para vaga de Desenvolvedor Web Pleno.
 
-O projeto é dividido em dois módulos:
+O projeto e dividido em dois modulos:
 
-- **backend/** – API REST em Node.js + TypeScript + Express + TypeORM + MySQL
-- **frontend/** – Interface web em Next.js (App Router) + React, consumindo a API via `fetch`
+- **backend/** - API REST em Node.js + TypeScript + Express + TypeORM + MySQL
+- **frontend/** - Interface web em Next.js (App Router) + React, consumindo a API via `fetch`
 
-> Este README está atualizado para refletir o estado **real** do código do projeto.
+> Este README reflete o estado atual do codigo.
 
 ---
 
-## Sumário
+## Sumario
 
 1. Tecnologias utilizadas
 2. Estrutura do projeto
 3. Como rodar o projeto
 4. Modelo de dados
-5. API – Endpoints disponíveis
-6. Frontend – Funcionalidades
-7. Validações e regras de negócio
-8. O que foi implementado
-9. O que eu faria se tivesse mais tempo
-10. Limitações conhecidas
+5. Seeds iniciais
+6. API - Endpoints disponiveis e exemplos
+7. Frontend - Funcionalidades
+8. Validacoes e regras de negocio
+9. O que foi implementado
+10. O que eu faria se tivesse mais tempo
+11. Limitacoes conhecidas
 
 ---
 
@@ -35,7 +36,7 @@ O projeto é dividido em dois módulos:
 - Express
 - TypeORM
 - MySQL
-- Celebrate / Joi (validações)
+- Celebrate / Joi (validacoes)
 - dotenv
 
 ### Frontend
@@ -45,64 +46,69 @@ O projeto é dividido em dois módulos:
 - TypeScript
 - Fetch API (para chamadas HTTP)
 
-> Observação: embora algumas versões anteriores do README mencionassem **Axios**, o frontend atual utiliza **apenas `fetch`** para consumo da API, sem dependência de Axios.
+> Observacao: o frontend usa apenas `fetch`.
 
 ---
 
 ## Estrutura do projeto
 
-backend/src contendo controllers, services, entities, routes, database, validations.
-
-frontend/app contendo page.tsx e layout.tsx.
+backend/src com controllers, services, repositories, entities, routes, database, validations.  
+frontend/app com page.tsx e layout.tsx.
 
 ---
 
 ## Como rodar o projeto
 
-### Pré-requisitos
+### Pre-requisitos
 
 - Node.js
 - MySQL
 - npm ou yarn
 
----
-
-### Configuração do banco de dados
+### Configuracao do banco de dados
 
 Crie um banco:
 
+```
 CREATE DATABASE cartorio_payments CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
----
+```
 
 ### Backend
 
-Crie backend/.env:
+Crie `backend/.env`:
 
+```
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=seu_usuario
 DB_PASS=sua_senha
 DB_NAME=cartorio_payments
 APP_PORT=3333
+```
 
 Rode:
 
+```
+cd backend
 npm install
 npm run dev
-
----
+```
 
 ### Frontend
 
-Crie frontend/.env.local:
+Crie `frontend/.env.local`:
 
+```
 NEXT_PUBLIC_API_URL=http://localhost:3333
+```
 
 Rode:
 
+```
+cd frontend
 npm install
 npm run dev
+```
 
 ---
 
@@ -128,76 +134,115 @@ npm run dev
 
 ---
 
-## API – Endpoints disponíveis
+## Seeds iniciais
+
+Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
+
+- Folha de pagamento
+- Combustivel
+- Estorno
+- Manutencao predial
+
+---
+
+## API - Endpoints disponiveis e exemplos
 
 ### /payment-types
 
-GET /payment-types  
-POST /payment-types
+- GET /payment-types  
+  Exemplo: `curl http://localhost:3333/payment-types`
 
-> OBS: Rota DELETE /payment-types/:id ainda **não** implementada no backend.
+- POST /payment-types  
+  Body:
+  ```json
+  { "name": "Combustivel" }
+  ```
 
----
+- PUT /payment-types/:id  
+  Exemplo: `curl -X PUT http://localhost:3333/payment-types/1 -H "Content-Type: application/json" -d "{\"name\":\"Folha de pagamento\"}"`
+
+- DELETE /payment-types/:id  
+  Exemplo: `curl -X DELETE http://localhost:3333/payment-types/1`
 
 ### /payments
 
-GET /payments  
-GET /payments/:id  
-POST /payments  
-PUT /payments/:id  
-DELETE /payments/:id
+- GET /payments  
+  Com filtros: `curl "http://localhost:3333/payments?paymentTypeId=1&startDate=2025-01-01&endDate=2025-01-31"`
 
-Filtros disponíveis no GET /payments:
+- GET /payments/:id  
+  Exemplo: `curl http://localhost:3333/payments/1`
 
-- paymentTypeId
-- startDate
-- endDate
+- POST /payments  
+  Body:
+  ```json
+  {
+    "date": "2025-01-20",
+    "paymentTypeId": 1,
+    "description": "Pagamento de folha - janeiro/2025",
+    "amount": 15000.5
+  }
+  ```
+
+- PUT /payments/:id  
+  Body:
+  ```json
+  {
+    "date": "2025-01-25",
+    "paymentTypeId": 2,
+    "description": "Reclassificacao de custo",
+    "amount": 1200
+  }
+  ```
+
+- DELETE /payments/:id  
+  Exemplo: `curl -X DELETE http://localhost:3333/payments/1`
 
 ---
 
-## Frontend – Funcionalidades
+## Frontend - Funcionalidades
 
 - Listagem de pagamentos
-- Filtro por tipo e período
-- Criação e edição de pagamentos
-- Exclusão de pagamentos
-- Carregamento dinâmico dos tipos (somente listagem)
-- Formatação de datas e valores
-
-> OBS: Tela de CRUD para tipos de pagamento ainda **não** existe.
+- Filtro por tipo e periodo
+- Criacao e edicao de pagamentos
+- Exclusao de pagamentos
+- CRUD de tipos (criar, editar, excluir) com tabela dedicada
+- Carregamento dinamico dos tipos para selects
+- Formatacao de datas e valores
 
 ---
 
-## Validações e regras de negócio
+## Validacoes e regras de negocio
 
-- Celebrate/Joi no backend valida:
-  - criação de pagamento
-  - edição de pagamento
-  - filtros de listagem
-  - criação de tipo de pagamento
-- Regras implementadas:
-  - Normalização de data
-  - Normalização de descrição
-  - Normalização do valor
-  - Proibição de pagamentos duplicados (mesma data + tipo + descrição + valor)
+- Celebrate/Joi valida:
+  - Body de criacao/edicao de pagamentos
+  - Query de filtros de pagamentos
+  - Params de id em pagamentos
+  - Body e params de criacao/edicao de tipos
+  - Params de id em delecao de tipos
+- Regras:
+  - Normalizacao de data, descricao e valor
+  - Proibicao de pagamentos duplicados (data+tipo+descricao+valor) no create/update
+  - Checagem de existencia de `paymentTypeId` no service antes de criar/atualizar
+  - Tipos com nome unico
+  - `GET /payments/:id` retorna 404 se nao encontrado
 
 ---
 
 ## O que foi implementado
 
-- API completa de pagamentos (CRUD + filtros)
-- Regra de não-duplicidade
-- Validações com celebrate/Joi
-- Frontend funcional com criação, edição, exclusão e filtros
+- API completa de pagamentos (CRUD + filtros) e tipos (CRUD)
+- Seeds dos tipos sugeridos
+- Regra de nao-duplicidade e checagem de FK
+- Validacoes com celebrate/Joi
+- Frontend com CRUD de pagamentos e CRUD de tipos, filtros e formatacoes
 - Modelo de dados conforme o LEAD
-- Documentação atualizada deste README
+- README com instrucoes e exemplos de chamadas
 
 ---
 
 ## O que eu faria se tivesse mais tempo
 
-- Implementaria CRUD completo de tipos de pagamento (incluindo DELETE e tela dedicada)
-- Criaria página e endpoint de relatório (`/payments/report`) com total por período
+- Criaria endpoint/pagina de relatorio (`/payments/report`) com total por periodo
 - Adicionaria upload de comprovantes usando Multer
 - Adicionaria Docker e docker-compose para subir ambiente completo
 - Reestruturaria o frontend separando page.tsx em componentes menores
@@ -206,9 +251,10 @@ Filtros disponíveis no GET /payments:
 
 ---
 
-## Limitações conhecidas
+## Limitacoes conhecidas
 
-- Backend não valida params de rota (ex.: id em /payments/:id)
-- Falta CRUD completo para tipos
-- Falta área administrativa para gerenciar tipos
-- Falta features diferenciais (Docker, testes, upload, relatórios)
+- Sem Docker/docker-compose
+- Sem endpoint/pagina de relatorio
+- Sem upload de comprovante
+- Sem testes automatizados
+- TypeORM usa `synchronize: true`; sem migrations
