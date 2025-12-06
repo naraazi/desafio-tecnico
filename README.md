@@ -134,7 +134,7 @@ Diagnostico:
 - Logs: `docker-compose logs -f backend` e `docker-compose logs -f frontend`
 - Parar/limpar: `docker-compose down` (use `docker-compose down -v` para remover o volume do MySQL)
 
-As variaveis de ambiente usadas no compose ja estao definidas em `docker-compose.yml` (DB_HOST=db, DB_USER=cartorio, DB_PASS=cartorio, DB_NAME=cartorio_payments, NEXT_PUBLIC_API_URL=http://backend:3333). Exemplos de env: `backend/.env.docker.example` e `frontend/.env.local.example`.
+As variaveis de ambiente usadas no compose ja estao definidas em `docker-compose.yml` (DB_HOST=db, DB_USER=cartorio, DB_PASS=cartorio, DB_NAME=cartorio_payments, NEXT_PUBLIC_API_URL=http://localhost:3333). Exemplos de env: `backend/.env.docker.example` e `frontend/.env.local.example`.
 
 ---
 
