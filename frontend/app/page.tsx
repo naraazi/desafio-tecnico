@@ -20,6 +20,7 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(false);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
@@ -33,6 +34,10 @@ export default function PaymentsPage() {
   const [formAmount, setFormAmount] = useState<string>("");
 
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [paymentTypeEditingId, setPaymentTypeEditingId] = useState<
+    number | null
+  >(null);
+  const [paymentTypeName, setPaymentTypeName] = useState<string>("");
 
   useEffect(() => {
     fetchPaymentTypes();
@@ -41,7 +46,7 @@ export default function PaymentsPage() {
 
   async function fetchPaymentTypes() {
     try {
-      setLoading(true);
+      setLoadingPaymentTypes(true);
       setError(null);
       const res = await fetch(`${API_URL}/payment-types`);
       if (!res.ok) {
@@ -52,7 +57,7 @@ export default function PaymentsPage() {
     } catch (err: any) {
       setError(err.message || "Erro inesperado ao buscar tipos de pagamento");
     } finally {
-      setLoading(false);
+      setLoadingPaymentTypes(false);
     }
   }
 
@@ -90,6 +95,11 @@ export default function PaymentsPage() {
     setFormDescription("");
     setFormAmount("");
     setEditingId(null);
+  }
+
+  function resetPaymentTypeForm() {
+    setPaymentTypeName("");
+    setPaymentTypeEditingId(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -137,6 +147,75 @@ export default function PaymentsPage() {
       resetForm();
     } catch (err: any) {
       alert(err.message || "Erro inesperado ao salvar pagamento");
+    }
+  }
+
+  async function handlePaymentTypeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!paymentTypeName.trim()) {
+      alert("Informe o nome do tipo");
+      return;
+    }
+
+    try {
+      setError(null);
+      const isEditing = paymentTypeEditingId !== null;
+      const url = isEditing
+        ? `${API_URL}/payment-types/${paymentTypeEditingId}`
+        : `${API_URL}/payment-types`;
+      const method = isEditing ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: paymentTypeName }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          data?.message ||
+            (isEditing
+              ? "Erro ao atualizar tipo de pagamento"
+              : "Erro ao criar tipo de pagamento")
+        );
+      }
+
+      await fetchPaymentTypes();
+      if (isEditing) {
+        await fetchPayments(); // garante select atualizado em pagamentos
+      }
+      resetPaymentTypeForm();
+    } catch (err: any) {
+      alert(err.message || "Erro inesperado ao salvar tipo");
+    }
+  }
+
+  function handlePaymentTypeEdit(type: PaymentType) {
+    setPaymentTypeEditingId(type.id);
+    setPaymentTypeName(type.name);
+  }
+
+  async function handlePaymentTypeDelete(id: number) {
+    if (!confirm("Excluir este tipo de pagamento?")) return;
+
+    try {
+      const res = await fetch(`${API_URL}/payment-types/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || "Erro ao excluir tipo de pagamento");
+      }
+
+      await fetchPaymentTypes();
+      await fetchPayments(); // atualiza selects e listagem
+      if (paymentTypeEditingId === id) {
+        resetPaymentTypeForm();
+      }
+    } catch (err: any) {
+      alert(err.message || "Erro inesperado ao excluir tipo");
     }
   }
 
@@ -303,6 +382,120 @@ export default function PaymentsPage() {
             )}
           </div>
         </form>
+      </section>
+
+      {/* Gerenciar Tipos */}
+      <section
+        style={{
+          border: "1px solid #ddd",
+          borderRadius: 8,
+          padding: "1rem",
+          marginBottom: "2rem",
+        }}
+      >
+        <h2 style={{ marginBottom: "0.75rem" }}>Gerenciar tipos de pagamento</h2>
+
+        <form
+          onSubmit={handlePaymentTypeSubmit}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "0.75rem",
+            marginBottom: "1rem",
+          }}
+        >
+          <div>
+            <label style={{ display: "block", marginBottom: 4 }}>Nome</label>
+            <input
+              type="text"
+              value={paymentTypeName}
+              onChange={(e) => setPaymentTypeName(e.target.value)}
+              style={{ width: "100%", padding: 6 }}
+              placeholder="Ex: Manutencao predial"
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              gap: "0.5rem",
+              marginTop: "0.5rem",
+            }}
+          >
+            <button
+              type="submit"
+              style={{
+                padding: "0.5rem 1rem",
+                borderRadius: 4,
+                border: "none",
+                cursor: "pointer",
+                background: "#2563eb",
+                color: "#fff",
+              }}
+            >
+              {paymentTypeEditingId ? "Salvar tipo" : "Criar tipo"}
+            </button>
+            {paymentTypeEditingId && (
+              <button
+                type="button"
+                onClick={resetPaymentTypeForm}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: 4,
+                  border: "1px solid #aaa",
+                  cursor: "pointer",
+                  background: "#fff",
+                }}
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
+        </form>
+
+        {loadingPaymentTypes ? (
+          <p>Carregando tipos...</p>
+        ) : paymentTypes.length === 0 ? (
+          <p>Nenhum tipo cadastrado.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "0.95rem",
+              }}
+            >
+              <thead>
+                <tr>
+                  <th style={thStyle}>Nome</th>
+                  <th style={thStyle}>Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paymentTypes.map((type) => (
+                  <tr key={type.id}>
+                    <td style={tdStyle}>{type.name}</td>
+                    <td style={tdStyle}>
+                      <button
+                        onClick={() => handlePaymentTypeEdit(type)}
+                        style={smallBtn("#2563eb", "#fff")}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handlePaymentTypeDelete(type.id)}
+                        style={smallBtn("#dc2626", "#fff")}
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       {/* Filtros */}
