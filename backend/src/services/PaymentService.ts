@@ -113,34 +113,47 @@ export class PaymentService {
   async update(
     id: number,
     data: {
-      date: string;
-      paymentTypeId: number;
-      description: string;
-      amount: number;
+      date?: string;
+      paymentTypeId?: number;
+      description?: string;
+      amount?: number;
     }
   ): Promise<Payment> {
-    const paymentTypeExists = await this.paymentTypeRepository.findOne({
-      where: { id: data.paymentTypeId },
-    });
-    if (!paymentTypeExists) {
-      throw new AppError("Tipo de pagamento nao encontrado.", 400);
-    }
-
     const payment = await this.paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
       throw new AppError("Pagamento nao encontrado.", 404);
     }
 
-    const normalizedDate = this.normalizeDate(data.date);
-    const normalizedDescription = this.normalizeDescription(data.description);
-    const normalizedAmount = this.normalizeAmount(data.amount);
+    const normalizedDate = data.date
+      ? this.normalizeDate(data.date)
+      : payment.date;
+    const normalizedDescription = data.description
+      ? this.normalizeDescription(data.description)
+      : payment.description;
+    const normalizedAmount =
+      typeof data.amount === "number"
+        ? this.normalizeAmount(data.amount)
+        : payment.amount;
+    const normalizedPaymentTypeId =
+      typeof data.paymentTypeId === "number"
+        ? data.paymentTypeId
+        : payment.paymentTypeId;
+
+    if (typeof data.paymentTypeId === "number") {
+      const paymentTypeExists = await this.paymentTypeRepository.findOne({
+        where: { id: data.paymentTypeId },
+      });
+      if (!paymentTypeExists) {
+        throw new AppError("Tipo de pagamento nao encontrado.", 400);
+      }
+    }
 
     const duplicate = await this.paymentRepository.findOne({
       where: {
         id: Not(id), // ignora o proprio registro
         date: normalizedDate,
-        paymentTypeId: data.paymentTypeId,
+        paymentTypeId: normalizedPaymentTypeId,
         description: normalizedDescription,
         amount: normalizedAmount,
       },
@@ -154,7 +167,7 @@ export class PaymentService {
     }
 
     payment.date = normalizedDate;
-    payment.paymentTypeId = data.paymentTypeId;
+    payment.paymentTypeId = normalizedPaymentTypeId;
     payment.description = normalizedDescription;
     payment.amount = normalizedAmount;
 
