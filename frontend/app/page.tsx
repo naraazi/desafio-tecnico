@@ -18,7 +18,6 @@ function formatDate(date: string): string {
 export default function PaymentsPage() {
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(false);
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
@@ -272,7 +271,11 @@ export default function PaymentsPage() {
             <span className={styles.heroStatValue}>{payments.length}</span>
           </div>
           <div className={styles.heroStat}>
-            <span className={styles.heroStatLabel}>Filtros ativos</span>
+            <span className={styles.heroStatLabel}>
+              Filtros
+              <br />
+              ativos
+            </span>
             <span className={styles.heroStatValue}>
               {
                 [filterTypeId, filterStartDate, filterEndDate].filter(Boolean)
