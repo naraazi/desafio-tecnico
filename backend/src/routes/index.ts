@@ -7,7 +7,11 @@ import {
   updatePaymentValidation,
   paymentIdParamValidation,
 } from "../validations/paymentValidations";
-import { createPaymentTypeValidation } from "../validations/paymentTypeValidations";
+import {
+  createPaymentTypeValidation,
+  updatePaymentTypeValidation,
+  paymentTypeIdParamValidation,
+} from "../validations/paymentTypeValidations";
 
 const routes = Router();
 
@@ -45,6 +49,18 @@ routes.get("/payment-types", (req, res, next) =>
 
 routes.post("/payment-types", createPaymentTypeValidation, (req, res, next) =>
   paymentTypeController.create(req, res, next)
+);
+
+routes.put(
+  "/payment-types/:id",
+  updatePaymentTypeValidation,
+  (req, res, next) => paymentTypeController.update(req, res, next)
+);
+
+routes.delete(
+  "/payment-types/:id",
+  paymentTypeIdParamValidation,
+  (req, res, next) => paymentTypeController.delete(req, res, next)
 );
 
 export default routes;

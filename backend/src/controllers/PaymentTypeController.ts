@@ -29,4 +29,32 @@ export class PaymentTypeController {
       next(err);
     }
   }
+
+  async update(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = Number(req.params.id);
+      const paymentType = await paymentTypeService.update(id, req.body);
+      return res.json(paymentType);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async delete(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = Number(req.params.id);
+      await paymentTypeService.delete(id);
+      return res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
 }
