@@ -198,6 +198,10 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 - GET /payments/:id  
   Exemplo: `curl http://localhost:3333/payments/1`
 
+- GET /payments/report  
+  Retorna `{ payments: Payment[], total: number }` com os mesmos filtros de `GET /payments`.  
+  Exemplo: `curl "http://localhost:3333/payments/report?startDate=2025-01-01&endDate=2025-01-31"`
+
 - POST /payments  
   Body:
   ```json
@@ -245,6 +249,7 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 
 - Listagem de pagamentos
 - Filtro por tipo e periodo
+- Relatorio por periodo (total + lista) usando os filtros
 - Criacao e edicao de pagamentos
 - Exclusao de pagamentos
 - CRUD de tipos (criar, editar, excluir) com tabela dedicada
@@ -274,9 +279,10 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 
 - API completa de pagamentos (CRUD + filtros) e tipos (CRUD)
 - Seeds dos tipos sugeridos
+- Endpoint de relatorio por periodo com totalizador
 - Regra de nao-duplicidade e checagem de FK
 - Validacoes com celebrate/Joi
-- Frontend com CRUD de pagamentos e CRUD de tipos, filtros e formatacoes
+- Frontend com CRUD de pagamentos e CRUD de tipos, filtros, relatorio e formatacoes
 - Modelo de dados conforme o LEAD
 - Docker/docker-compose para subir ambiente completo
 - README com instrucoes e exemplos de chamadas
@@ -285,7 +291,6 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 
 ## O que eu faria se tivesse mais tempo
 
-- Criaria endpoint/pagina de relatorio (`/payments/report`) com total por periodo
 - Adicionaria upload de comprovantes usando Multer
 - Reestruturaria o frontend separando page.tsx em componentes menores
 - Implementaria testes automatizados (Jest ou Vitest)
@@ -295,7 +300,6 @@ Ao subir o backend, sao inseridos automaticamente (se nao existirem) os tipos:
 
 ## Limitacoes conhecidas
 
-- Sem endpoint/pagina de relatorio
 - Sem upload de comprovante
 - Sem testes automatizados
 - TypeORM usa `synchronize: true`; sem migrations
