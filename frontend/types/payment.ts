@@ -13,3 +13,8 @@ export interface Payment {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface PaymentReportResponse {
+  payments: Payment[];
+  total: number;
+}

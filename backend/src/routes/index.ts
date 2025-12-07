@@ -23,6 +23,12 @@ routes.get("/payments", listPaymentsValidation, (req, res, next) =>
   paymentController.list(req, res, next)
 );
 
+routes.get(
+  "/payments/report",
+  listPaymentsValidation,
+  (req, res, next) => paymentController.report(req, res, next)
+);
+
 routes.get("/payments/:id", paymentIdParamValidation, (req, res, next) =>
   paymentController.show(req, res, next)
 );

@@ -31,3 +31,11 @@ export const listPaymentsValidation = celebrate({
     endDate: Joi.string().isoDate().optional(),
   }),
 });
+
+export const reportPaymentsValidation = celebrate({
+  [Segments.QUERY]: Joi.object({
+    paymentTypeId: Joi.number().integer().optional(),
+    startDate: Joi.string().isoDate().optional(),
+    endDate: Joi.string().isoDate().optional(),
+  }),
+});

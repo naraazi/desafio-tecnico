@@ -31,6 +31,19 @@ export class PaymentController {
     }
   }
 
+  async report(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const report = await paymentService.report(req.query);
+      return res.json(report);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async show(
     req: Request,
     res: Response,

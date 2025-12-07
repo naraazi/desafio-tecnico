@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type React from "react";
-import type { Payment, PaymentType } from "../types/payment";
+import type {
+  Payment,
+  PaymentReportResponse,
+  PaymentType,
+} from "../types/payment";
 import styles from "./page.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -21,6 +25,7 @@ export default function PaymentsPage() {
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
+  const [loadingReport, setLoadingReport] = useState(false);
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
@@ -38,6 +43,8 @@ export default function PaymentsPage() {
     number | null
   >(null);
   const [paymentTypeName, setPaymentTypeName] = useState<string>("");
+  const [reportTotal, setReportTotal] = useState<number | null>(null);
+  const [reportPayments, setReportPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
     fetchPaymentTypes();
@@ -247,6 +254,38 @@ export default function PaymentsPage() {
   function handleApplyFilters(e: React.FormEvent) {
     e.preventDefault();
     fetchPayments();
+  }
+
+  async function fetchReport(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    try {
+      setLoadingReport(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      if (filterTypeId) params.append("paymentTypeId", filterTypeId);
+      if (filterStartDate) params.append("startDate", filterStartDate);
+      if (filterEndDate) params.append("endDate", filterEndDate);
+
+      const url =
+        params.toString().length > 0
+          ? `${API_URL}/payments/report?${params.toString()}`
+          : `${API_URL}/payments/report`;
+
+      const res = await fetch(url);
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || "Erro ao gerar relatorio");
+      }
+
+      const data: PaymentReportResponse = await res.json();
+      setReportTotal(data.total);
+      setReportPayments(data.payments);
+    } catch (err: any) {
+      setError(err.message || "Erro inesperado ao gerar relatorio");
+    } finally {
+      setLoadingReport(false);
+    }
   }
 
   return (
@@ -509,8 +548,89 @@ export default function PaymentsPage() {
             >
               Aplicar filtros
             </button>
+            <button
+              type="button"
+              onClick={() => fetchReport()}
+              className={`${styles.btn} ${styles.btnSecondary}`}
+            >
+              Gerar relatorio
+            </button>
           </div>
         </form>
+      </section>
+
+      {/* Relatorio */}
+      <section className={styles.panel}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.helperText}>Resumo</p>
+            <h2>Relatorio por periodo</h2>
+          </div>
+          <span className={styles.badgeLight}>
+            {loadingReport ? "Calculando" : "Total e lista"}
+          </span>
+        </div>
+
+        {reportTotal === null && reportPayments.length === 0 ? (
+          <p className={styles.muted}>
+            Use os filtros e clique em "Gerar relatorio".
+          </p>
+        ) : (
+          <>
+            <div className={styles.reportSummary}>
+              <div className={styles.reportCard}>
+                <span className={styles.reportLabel}>Total no periodo</span>
+                <strong className={styles.reportValue}>
+                  {Number(reportTotal || 0).toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </strong>
+              </div>
+            </div>
+
+            {loadingReport ? (
+              <p className={styles.loading}>Gerando relatorio...</p>
+            ) : reportPayments.length === 0 ? (
+              <p className={styles.empty}>
+                Nenhum pagamento no periodo selecionado.
+              </p>
+            ) : (
+              <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Tipo</th>
+                      <th>Descricao</th>
+                      <th>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportPayments.map((p) => (
+                      <tr key={`report-${p.id}`}>
+                        <td>{formatDate(p.date)}</td>
+                        <td>
+                          {p.paymentType?.name ||
+                            paymentTypes.find((t) => t.id === p.paymentTypeId)
+                              ?.name ||
+                            "-"}
+                        </td>
+                        <td>{p.description}</td>
+                        <td>
+                          {Number(p.amount).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       {/* Tabela */}

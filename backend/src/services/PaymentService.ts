@@ -193,4 +193,18 @@ export class PaymentService {
 
     await paymentRepository.remove(payment);
   }
+
+  async report(filters?: {
+    paymentTypeId?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<{ payments: Payment[]; total: number }> {
+    const payments = await this.list(filters);
+    const total = payments.reduce(
+      (acc, payment) => acc + Number(payment.amount),
+      0
+    );
+
+    return { payments, total };
+  }
 }

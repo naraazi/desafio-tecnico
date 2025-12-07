@@ -307,6 +307,37 @@
   font-weight: 600;
 }
 
+.muted {
+  color: var(--muted);
+}
+
+.reportSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.reportCard {
+  background: #e8f3fb;
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reportLabel {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.reportValue {
+  font-size: 1.4rem;
+  color: var(--blue-900);
+}
+
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
