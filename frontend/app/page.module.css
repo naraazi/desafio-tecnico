@@ -236,6 +236,16 @@
   font-size: 0.93rem;
 }
 
+.fileInput {
+  display: none;
+}
+
+.btnDanger {
+  background: #fef2f2;
+  border-color: #f3caca;
+  color: #b91c1c;
+}
+
 .filters {
   margin-top: 6px;
 }

@@ -12,6 +12,8 @@ export interface Payment {
   paymentType?: PaymentType;
   createdAt?: string;
   updatedAt?: string;
+   receiptPath?: string;
+   receiptUrl?: string;
 }
 
 export interface PaymentReportResponse {

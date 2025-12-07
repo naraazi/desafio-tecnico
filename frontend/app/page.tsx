@@ -26,6 +26,8 @@ export default function PaymentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
   const [loadingReport, setLoadingReport] = useState(false);
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(null);
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
@@ -248,6 +250,72 @@ export default function PaymentsPage() {
       await fetchPayments();
     } catch (err: any) {
       alert(err.message || "Erro inesperado ao excluir pagamento");
+    }
+  }
+
+  async function handleUploadReceipt(paymentId: number, file?: File | null) {
+    if (!file) return;
+    try {
+      setUploadingId(paymentId);
+      setError(null);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${API_URL}/payments/${paymentId}/receipt`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          data?.message || "Erro ao enviar comprovante (PDF/JPG/PNG)"
+        );
+      }
+
+      const data = await res.json();
+
+      setPayments((prev) =>
+        prev.map((p) =>
+          p.id === paymentId
+            ? {
+                ...p,
+                receiptPath: data.payment?.receiptPath ?? p.receiptPath,
+                receiptUrl: data.receiptUrl ?? p.receiptUrl,
+              }
+            : p
+        )
+      );
+    } catch (err: any) {
+      alert(err.message || "Erro inesperado ao enviar comprovante");
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
+  async function handleDeleteReceipt(paymentId: number) {
+    if (!confirm("Remover comprovante deste pagamento?")) return;
+    try {
+      setDeletingReceiptId(paymentId);
+      setError(null);
+      const res = await fetch(`${API_URL}/payments/${paymentId}/receipt`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || "Erro ao remover comprovante");
+      }
+      setPayments((prev) =>
+        prev.map((p) =>
+          p.id === paymentId
+            ? { ...p, receiptPath: undefined, receiptUrl: undefined }
+            : p
+        )
+      );
+    } catch (err: any) {
+      alert(err.message || "Erro inesperado ao remover comprovante");
+    } finally {
+      setDeletingReceiptId(null);
     }
   }
 
@@ -692,6 +760,45 @@ export default function PaymentsPage() {
                         >
                           Excluir
                         </button>
+                        <label className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}>
+                          {uploadingId === p.id
+                            ? "Enviando..."
+                            : p.receiptUrl
+                            ? "Alterar comprovante"
+                            : "Enviar comprovante"}
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            className={styles.fileInput}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              handleUploadReceipt(p.id, file);
+                              e.target.value = "";
+                            }}
+                            disabled={uploadingId === p.id}
+                          />
+                        </label>
+                        {p.receiptUrl && (
+                          <>
+                            <a
+                              href={p.receiptUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
+                            >
+                              Ver comprovante
+                            </a>
+                            <button
+                              onClick={() => handleDeleteReceipt(p.id)}
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                              disabled={deletingReceiptId === p.id}
+                            >
+                              {deletingReceiptId === p.id
+                                ? "Removendo..."
+                                : "Remover comprovante"}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
