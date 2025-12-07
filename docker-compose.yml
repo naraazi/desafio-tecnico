@@ -33,6 +33,11 @@ services:
       DB_PASS: cartorio
       DB_NAME: cartorio_payments
       APP_PORT: 3333
+      AWS_REGION: ${AWS_REGION:-sa-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET:-cartorio-payments-receipt}
+      BUCKET_PRIVADO: ${BUCKET_PRIVADO:-true}
     command: ["sh", "-c", "sleep 10 && node dist/server.js"]
     ports:
       - "3333:3333"
