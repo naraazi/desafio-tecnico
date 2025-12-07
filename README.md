@@ -93,6 +93,7 @@ docker-compose up -d --build
 URLs: Frontend http://localhost:3000 | API http://localhost:3333  
 MySQL exposto na porta 3307 do host.  
 Env exemplo em `backend/.env.docker.example` e `frontend/.env.local.example`.
+Para o docker-compose receber as credenciais AWS/S3, crie um `.env` na raiz do projeto (mesmo nível do `docker-compose.yml`) com: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `BUCKET_PRIVADO`.
 
 ---
 
