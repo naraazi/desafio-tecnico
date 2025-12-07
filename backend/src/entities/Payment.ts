@@ -38,4 +38,7 @@ export class Payment {
 
   @UpdateDateColumn()
   updatedAt!: Date;
+
+  // Campo virtual (não persiste no banco) para expor URL do comprovante
+  receiptUrl?: string;
 }

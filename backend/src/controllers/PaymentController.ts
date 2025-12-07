@@ -88,4 +88,40 @@ export class PaymentController {
       next(err);
     }
   }
+
+  async uploadReceipt(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = Number(req.params.id);
+      const file = req.file;
+      const { payment, receiptUrl } = await paymentService.uploadReceipt(
+        id,
+        file
+      );
+
+      return res.status(201).json({
+        payment,
+        receiptUrl,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteReceipt(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const id = Number(req.params.id);
+      await paymentService.deleteReceipt(id);
+      return res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  }
 }

@@ -1,8 +1,15 @@
 import { Not } from "typeorm";
+import {
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Payment } from "../entities/Payment";
 import { getPaymentRepository } from "../repositories/PaymentRepository";
 import { getPaymentTypeRepository } from "../repositories/PaymentTypeRepository";
 import { AppError } from "../errors/AppError";
+import { isBucketPrivate, s3Bucket, s3Client } from "../config/s3Client";
 
 interface CreatePaymentDTO {
   date: string;
@@ -66,6 +73,37 @@ export class PaymentService {
     return paymentRepository.save(payment);
   }
 
+  private buildPublicUrl(key: string) {
+    const region = process.env.AWS_REGION;
+    return `https://${s3Bucket}.s3.${region}.amazonaws.com/${key}`;
+  }
+
+  private async buildReceiptUrl(key: string): Promise<string> {
+    if (!key) return "";
+    if (!isBucketPrivate) {
+      return this.buildPublicUrl(key);
+    }
+    const command = new GetObjectCommand({
+      Bucket: s3Bucket,
+      Key: key,
+    });
+    return getSignedUrl(s3Client, command, { expiresIn: 60 * 60 }); // 1h
+  }
+
+  private async deleteS3Object(key?: string) {
+    if (!key) return;
+    try {
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: s3Bucket,
+          Key: key,
+        })
+      );
+    } catch (err) {
+      console.warn("Não foi possível remover comprovante no S3:", err);
+    }
+  }
+
   async list(filters?: {
     paymentTypeId?: number;
     startDate?: string;
@@ -96,7 +134,17 @@ export class PaymentService {
       });
     }
 
-    return query.getMany();
+    const payments = await query.getMany();
+
+    await Promise.all(
+      payments.map(async (payment) => {
+        if (payment.receiptPath) {
+          payment.receiptUrl = await this.buildReceiptUrl(payment.receiptPath);
+        }
+      })
+    );
+
+    return payments;
   }
 
   async findById(id: number) {
@@ -109,6 +157,10 @@ export class PaymentService {
 
     if (!payment) {
       throw new AppError("Pagamento nao encontrado.", 404);
+    }
+
+    if (payment.receiptPath) {
+      payment.receiptUrl = await this.buildReceiptUrl(payment.receiptPath);
     }
 
     return payment;
@@ -183,12 +235,68 @@ export class PaymentService {
     return payment;
   }
 
+  async uploadReceipt(id: number, file?: Express.Multer.File) {
+    if (!file) {
+      throw new AppError("Arquivo é obrigatório.", 400);
+    }
+
+    if (!s3Bucket) {
+      throw new AppError("Bucket S3 não configurado.", 500);
+    }
+
+    const paymentRepository = getPaymentRepository();
+
+    const payment = await paymentRepository.findOne({ where: { id } });
+    if (!payment) {
+      throw new AppError("Pagamento nao encontrado.", 404);
+    }
+
+    // Remove comprovante anterior, se existir
+    if (payment.receiptPath) {
+      try {
+        await s3Client.send(
+          new DeleteObjectCommand({
+            Bucket: s3Bucket,
+            Key: payment.receiptPath,
+          })
+        );
+      } catch (err) {
+        console.warn("Não foi possível remover comprovante anterior:", err);
+      }
+    }
+
+    const safeName = file.originalname.replace(/\s+/g, "-");
+    const key = `receipts/${id}/${Date.now()}-${safeName}`;
+
+    await s3Client.send(
+      new PutObjectCommand({
+        Bucket: s3Bucket,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        ACL: isBucketPrivate ? undefined : "public-read",
+      })
+    );
+
+    payment.receiptPath = key;
+    await paymentRepository.save(payment);
+
+    const receiptUrl = await this.buildReceiptUrl(key);
+
+    return { payment, receiptUrl };
+  }
+
   async delete(id: number) {
     const paymentRepository = getPaymentRepository();
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
       throw new AppError("Pagamento nao encontrado.", 404);
+    }
+
+    // remove comprovante associado, se houver
+    if (payment.receiptPath && s3Bucket) {
+      await this.deleteS3Object(payment.receiptPath);
     }
 
     await paymentRepository.remove(payment);
@@ -206,5 +314,28 @@ export class PaymentService {
     );
 
     return { payments, total };
+  }
+
+  async deleteReceipt(id: number) {
+    if (!s3Bucket) {
+      throw new AppError("Bucket S3 não configurado.", 500);
+    }
+
+    const paymentRepository = getPaymentRepository();
+    const payment = await paymentRepository.findOne({ where: { id } });
+
+    if (!payment) {
+      throw new AppError("Pagamento nao encontrado.", 404);
+    }
+
+    if (!payment.receiptPath) {
+      throw new AppError("Pagamento não possui comprovante.", 404);
+    }
+
+    await this.deleteS3Object(payment.receiptPath);
+    payment.receiptPath = undefined;
+    await paymentRepository.save(payment);
+
+    return payment;
   }
 }

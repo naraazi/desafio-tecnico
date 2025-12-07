@@ -12,6 +12,7 @@ import {
   updatePaymentTypeValidation,
   paymentTypeIdParamValidation,
 } from "../validations/paymentTypeValidations";
+import { upload } from "../middlewares/upload";
 
 const routes = Router();
 
@@ -46,6 +47,19 @@ routes.put(
 
 routes.delete("/payments/:id", paymentIdParamValidation, (req, res, next) =>
   paymentController.delete(req, res, next)
+);
+
+routes.post(
+  "/payments/:id/receipt",
+  paymentIdParamValidation,
+  upload.single("file"),
+  (req, res, next) => paymentController.uploadReceipt(req, res, next)
+);
+
+routes.delete(
+  "/payments/:id/receipt",
+  paymentIdParamValidation,
+  (req, res, next) => paymentController.deleteReceipt(req, res, next)
 );
 
 // Tipos de pagamento
