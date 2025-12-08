@@ -1,10 +1,11 @@
-import { Not } from "typeorm";
+﻿import { Not } from "typeorm";
 import {
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import fileType from "file-type";
 import { Payment } from "../entities/Payment";
 import { getPaymentRepository } from "../repositories/PaymentRepository";
 import { getPaymentTypeRepository } from "../repositories/PaymentTypeRepository";
@@ -18,6 +19,12 @@ interface CreatePaymentDTO {
   amount: number;
 }
 
+const ALLOWED_FILE_TYPES = [
+  { mime: "application/pdf", ext: "pdf" },
+  { mime: "image/png", ext: "png" },
+  { mime: "image/jpeg", ext: "jpg" },
+];
+
 export class PaymentService {
   private normalizeDate(date: string): string {
     return date.substring(0, 10);
@@ -29,48 +36,6 @@ export class PaymentService {
 
   private normalizeAmount(amount: number): number {
     return Number(amount.toFixed(2));
-  }
-
-  async create(data: CreatePaymentDTO) {
-    const paymentRepository = getPaymentRepository();
-    const paymentTypeRepository = getPaymentTypeRepository();
-
-    const normalizedDate = this.normalizeDate(data.date);
-    const normalizedDescription = this.normalizeDescription(data.description);
-    const normalizedAmount = this.normalizeAmount(data.amount);
-    const { paymentTypeId } = data;
-
-    const paymentTypeExists = await paymentTypeRepository.findOne({
-      where: { id: paymentTypeId },
-    });
-    if (!paymentTypeExists) {
-      throw new AppError("Tipo de pagamento nao encontrado.", 400);
-    }
-
-    const existing = await paymentRepository.findOne({
-      where: {
-        date: normalizedDate,
-        paymentTypeId,
-        description: normalizedDescription,
-        amount: normalizedAmount,
-      },
-    });
-
-    if (existing) {
-      throw new AppError(
-        "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
-        400
-      );
-    }
-
-    const payment = paymentRepository.create({
-      ...data,
-      date: normalizedDate,
-      description: normalizedDescription,
-      amount: normalizedAmount,
-    });
-
-    return paymentRepository.save(payment);
   }
 
   private buildPublicUrl(key: string) {
@@ -100,7 +65,14 @@ export class PaymentService {
         })
       );
     } catch (err) {
-      console.warn("Não foi possível remover comprovante no S3:", err);
+      console.warn("Nao foi possivel remover comprovante no S3:", err);
+    }
+  }
+
+  private ensureAllowedFile(file: Express.Multer.File) {
+    const maxBytes = 5 * 1024 * 1024; // 5MB (mesmo limite do multer)
+    if (file.size > maxBytes) {
+      throw new AppError("Arquivo maior que o limite de 5MB.", 400);
     }
   }
 
@@ -164,6 +136,48 @@ export class PaymentService {
     }
 
     return payment;
+  }
+
+  async create(data: CreatePaymentDTO) {
+    const paymentRepository = getPaymentRepository();
+    const paymentTypeRepository = getPaymentTypeRepository();
+
+    const normalizedDate = this.normalizeDate(data.date);
+    const normalizedDescription = this.normalizeDescription(data.description);
+    const normalizedAmount = this.normalizeAmount(data.amount);
+    const { paymentTypeId } = data;
+
+    const paymentTypeExists = await paymentTypeRepository.findOne({
+      where: { id: paymentTypeId },
+    });
+    if (!paymentTypeExists) {
+      throw new AppError("Tipo de pagamento nao encontrado.", 400);
+    }
+
+    const existing = await paymentRepository.findOne({
+      where: {
+        date: normalizedDate,
+        paymentTypeId,
+        description: normalizedDescription,
+        amount: normalizedAmount,
+      },
+    });
+
+    if (existing) {
+      throw new AppError(
+        "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
+        400
+      );
+    }
+
+    const payment = paymentRepository.create({
+      ...data,
+      date: normalizedDate,
+      description: normalizedDescription,
+      amount: normalizedAmount,
+    });
+
+    return paymentRepository.save(payment);
   }
 
   async update(
@@ -237,11 +251,11 @@ export class PaymentService {
 
   async uploadReceipt(id: number, file?: Express.Multer.File) {
     if (!file) {
-      throw new AppError("Arquivo é obrigatório.", 400);
+      throw new AppError("Arquivo e obrigatorio.", 400);
     }
 
     if (!s3Bucket) {
-      throw new AppError("Bucket S3 não configurado.", 500);
+      throw new AppError("Bucket S3 nao configurado.", 500);
     }
 
     const paymentRepository = getPaymentRepository();
@@ -261,19 +275,33 @@ export class PaymentService {
           })
         );
       } catch (err) {
-        console.warn("Não foi possível remover comprovante anterior:", err);
+        console.warn("Nao foi possivel remover comprovante anterior:", err);
       }
     }
 
-    const safeName = file.originalname.replace(/\s+/g, "-");
-    const key = `receipts/${id}/${Date.now()}-${safeName}`;
+    this.ensureAllowedFile(file);
+    const detectedType = await fileType.fromBuffer(file.buffer);
+
+    if (!detectedType) {
+      throw new AppError("Nao foi possivel identificar o tipo do arquivo.", 400);
+    }
+
+    const isAllowed = ALLOWED_FILE_TYPES.some(
+      (t) => t.mime === detectedType.mime && t.ext === detectedType.ext
+    );
+
+    if (!isAllowed) {
+      throw new AppError("Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.", 400);
+    }
+
+    const key = `receipts/${id}/${Date.now()}.${detectedType.ext}`;
 
     await s3Client.send(
       new PutObjectCommand({
         Bucket: s3Bucket,
         Key: key,
         Body: file.buffer,
-        ContentType: file.mimetype,
+        ContentType: detectedType.mime,
         ACL: isBucketPrivate ? undefined : "public-read",
       })
     );
@@ -318,7 +346,7 @@ export class PaymentService {
 
   async deleteReceipt(id: number) {
     if (!s3Bucket) {
-      throw new AppError("Bucket S3 não configurado.", 500);
+      throw new AppError("Bucket S3 nao configurado.", 500);
     }
 
     const paymentRepository = getPaymentRepository();
@@ -329,7 +357,7 @@ export class PaymentService {
     }
 
     if (!payment.receiptPath) {
-      throw new AppError("Pagamento não possui comprovante.", 404);
+      throw new AppError("Pagamento nao possui comprovante.", 404);
     }
 
     await this.deleteS3Object(payment.receiptPath);
