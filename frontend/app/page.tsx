@@ -323,8 +323,15 @@ export default function PaymentsPage() {
     }
   }
 
-  async function handleUploadReceipt(paymentId: number, file?: File | null) {
+async function handleUploadReceipt(paymentId: number, file?: File | null) {
     if (!file) return;
+
+    const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.");
+      return;
+    }
+
     try {
       setUploadingId(paymentId);
       setError(null);
@@ -875,7 +882,7 @@ export default function PaymentsPage() {
                             : "Enviar comprovante"}
                           <input
                             type="file"
-                            accept=".pdf,image/*"
+                            accept="application/pdf,image/png,image/jpeg"
                             className={styles.fileInput}
                             onChange={(e) => {
                               const file = e.target.files?.[0];
