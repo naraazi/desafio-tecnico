@@ -79,7 +79,7 @@ describe("PaymentService", () => {
     });
   });
 
-  it("lança erro se tipo de pagamento nao existe", async () => {
+  it("lanca erro 404 se tipo de pagamento nao existe", async () => {
     paymentTypeRepo.findOne.mockResolvedValue(null);
 
     await expect(
@@ -89,10 +89,10 @@ describe("PaymentService", () => {
         description: "Desc",
         amount: 10,
       })
-    ).rejects.toBeInstanceOf(AppError);
+    ).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it("bloqueia pagamento duplicado", async () => {
+  it("bloqueia pagamento duplicado com 409", async () => {
     paymentTypeRepo.findOne.mockResolvedValue({ id: 1 });
     paymentRepo.findOne.mockResolvedValue({ id: 2 });
 
@@ -103,17 +103,23 @@ describe("PaymentService", () => {
         description: "Desc",
         amount: 10,
       })
-    ).rejects.toBeInstanceOf(AppError);
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 
-  it("bloqueia update quando encontra duplicata", async () => {
+  it("bloqueia update quando encontra duplicata com 409", async () => {
     paymentRepo.findOne
-      .mockResolvedValueOnce({ id: 1, date: "2025-01-20", paymentTypeId: 1, description: "X", amount: 10 })
+      .mockResolvedValueOnce({
+        id: 1,
+        date: "2025-01-20",
+        paymentTypeId: 1,
+        description: "X",
+        amount: 10,
+      })
       .mockResolvedValueOnce({ id: 2 }); // simulando duplicado
 
     await expect(
       service.update(1, { description: "Novo" })
-    ).rejects.toBeInstanceOf(AppError);
+    ).rejects.toMatchObject({ statusCode: 409 });
   });
 
   it("atualiza pagamento normalizando dados", async () => {

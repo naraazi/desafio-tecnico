@@ -35,7 +35,7 @@ export class PaymentTypeService {
     });
 
     if (existing) {
-      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 400);
+      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 409);
     }
 
     const paymentType = paymentTypeRepository.create({
@@ -93,7 +93,7 @@ export class PaymentTypeService {
     });
 
     if (duplicate && duplicate.id !== id) {
-      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 400);
+      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 409);
     }
 
     paymentType.name = normalizedName;

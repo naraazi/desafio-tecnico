@@ -151,7 +151,7 @@ export class PaymentService {
       where: { id: paymentTypeId },
     });
     if (!paymentTypeExists) {
-      throw new AppError("Tipo de pagamento nao encontrado.", 400);
+      throw new AppError("Tipo de pagamento nao encontrado.", 404);
     }
 
     const existing = await paymentRepository.findOne({
@@ -166,7 +166,7 @@ export class PaymentService {
     if (existing) {
       throw new AppError(
         "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
-        400
+        409
       );
     }
 
@@ -218,7 +218,7 @@ export class PaymentService {
         where: { id: data.paymentTypeId },
       });
       if (!paymentTypeExists) {
-        throw new AppError("Tipo de pagamento nao encontrado.", 400);
+        throw new AppError("Tipo de pagamento nao encontrado.", 404);
       }
     }
 
@@ -235,7 +235,7 @@ export class PaymentService {
     if (duplicate) {
       throw new AppError(
         "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
-        400
+        409
       );
     }
 
