@@ -17,12 +17,13 @@ O projeto é dividido em dois módulos:
 4. Modelo de dados
 5. Seeds iniciais
 6. API - Endpoints disponíveis e exemplos
-7. Testes rápidos de API (curl)
-8. Frontend - Funcionalidades
-9. Validações e regras de negócio
-10. O que foi implementado
-11. O que eu faria se tivesse mais tempo
-12. Limitações conhecidas
+7. Testes automatizados
+8. Testes rápidos de API (curl)
+9. Frontend - Funcionalidades
+10. Validações e regras de negócio
+11. O que foi implementado
+12. O que eu faria se tivesse mais tempo
+13. Limitações conhecidas
 
 ---
 
@@ -199,6 +200,13 @@ Ao subir o backend, são inseridos (se não existirem):
 - Enviar comprovante: `curl -X POST http://localhost:3333/payments/1/receipt -F "file=@/caminho/arquivo.pdf"`
 - Remover comprovante: `curl -X DELETE http://localhost:3333/payments/1/receipt`
 - Relatório: `curl "http://localhost:3333/payments/report?startDate=2025-01-01&endDate=2025-01-31"`
+
+---
+
+## Testes automatizados
+
+- Unitários com Vitest cobrindo regras de pagamento e tipos (`src/services/__tests__`), mockando repositórios e S3. Não dependem de MySQL nem de credenciais AWS.
+- Rodar localmente no backend: `npm test`. (Os testes não estão configurados para rodar via container.)
 
 ---
 
