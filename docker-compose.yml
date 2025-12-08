@@ -36,7 +36,7 @@ services:
       AWS_REGION: ${AWS_REGION:-sa-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-      S3_BUCKET: ${S3_BUCKET:-cartorio-payments-receipt}
+      S3_BUCKET: ${S3_BUCKET:-your-s3-bucket-name}
       BUCKET_PRIVADO: ${BUCKET_PRIVADO:-true}
     command: ["sh", "-c", "sleep 10 && node dist/server.js"]
     ports:
