@@ -7,6 +7,7 @@ import type {
   PaymentReportResponse,
   PaymentType,
 } from "../types/payment";
+import type { User } from "../types/user";
 import styles from "./page.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -69,7 +70,20 @@ function formatCurrencyFromNumber(value: number): string {
   });
 }
 
+function redirectToLogin() {
+  if (typeof window !== "undefined") {
+    window.location.href = "/login";
+  }
+}
+
+function isUnauthorizedStatus(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
 export default function PaymentsPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(false);
@@ -100,16 +114,67 @@ export default function PaymentsPage() {
   const [reportTotal, setReportTotal] = useState<number | null>(null);
   const [reportPayments, setReportPayments] = useState<Payment[]>([]);
 
+  const isAdmin = user?.role === "admin";
+
   useEffect(() => {
-    fetchPaymentTypes();
-    fetchPayments();
+    fetchCurrentUser();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      fetchPaymentTypes();
+      fetchPayments();
+    }
+  }, [user]);
+
+  async function fetchCurrentUser() {
+    if (!API_URL) {
+      setError("API URL nao configurada.");
+      setLoadingUser(false);
+      return;
+    }
+    try {
+      setLoadingUser(true);
+      setError(null);
+      const res = await fetch(`${API_URL}/auth/me`, {
+        credentials: "include",
+      });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Erro ao carregar usuario autenticado.");
+      }
+
+      const data = await res.json();
+      setUser(data.user);
+    } catch (err: any) {
+      setError(err.message || "Erro inesperado ao carregar usuario.");
+    } finally {
+      setLoadingUser(false);
+    }
+  }
+
   async function fetchPaymentTypes() {
+    if (!API_URL) {
+      setError("API URL nao configurada.");
+      return;
+    }
     try {
       setLoadingPaymentTypes(true);
       setError(null);
-      const res = await fetch(`${API_URL}/payment-types`);
+      const res = await fetch(`${API_URL}/payment-types`, {
+        credentials: "include",
+      });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
+
       if (!res.ok) {
         throw new Error("Erro ao buscar tipos de pagamento");
       }
@@ -123,6 +188,10 @@ export default function PaymentsPage() {
   }
 
   async function fetchPayments() {
+    if (!API_URL) {
+      setError("API URL nao configurada.");
+      return;
+    }
     try {
       setLoadingPayments(true);
       setError(null);
@@ -139,7 +208,13 @@ export default function PaymentsPage() {
           ? `${API_URL}/payments?${params.toString()}`
           : `${API_URL}/payments`;
 
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
+
       if (!res.ok) {
         throw new Error("Erro ao buscar pagamentos");
       }
@@ -167,6 +242,10 @@ export default function PaymentsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isAdmin) {
+      alert("Apenas administradores podem criar ou editar pagamentos.");
+      return;
+    }
     if (!formDate || !formTypeId || !formDescription || !formAmount) {
       alert("Preencha todos os campos");
       return;
@@ -207,7 +286,13 @@ export default function PaymentsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
+        credentials: "include",
       });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -228,6 +313,10 @@ export default function PaymentsPage() {
 
   async function handlePaymentTypeSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isAdmin) {
+      alert("Apenas administradores podem criar ou editar tipos.");
+      return;
+    }
     if (!paymentTypeName.trim()) {
       alert("Informe o nome do tipo");
       return;
@@ -245,7 +334,13 @@ export default function PaymentsPage() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: paymentTypeName }),
+        credentials: "include",
       });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -268,17 +363,25 @@ export default function PaymentsPage() {
   }
 
   function handlePaymentTypeEdit(type: PaymentType) {
+    if (!isAdmin) return;
     setPaymentTypeEditingId(type.id);
     setPaymentTypeName(type.name);
   }
 
   async function handlePaymentTypeDelete(id: number) {
+    if (!isAdmin) return;
     if (!confirm("Excluir este tipo de pagamento?")) return;
 
     try {
       const res = await fetch(`${API_URL}/payment-types/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -299,6 +402,7 @@ export default function PaymentsPage() {
   }
 
   function handleEdit(payment: Payment) {
+    if (!isAdmin) return;
     setEditingId(payment.id);
     setFormDate(isoToDisplay(payment.date)); // mostra DD/MM/YYYY
     setFormTypeId(String(payment.paymentTypeId));
@@ -307,12 +411,20 @@ export default function PaymentsPage() {
   }
 
   async function handleDelete(id: number) {
+    if (!isAdmin) return;
     if (!confirm("Tem certeza que deseja excluir este pagamento?")) return;
 
     try {
       const res = await fetch(`${API_URL}/payments/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
+
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         throw new Error(data?.message || "Erro ao excluir pagamento");
@@ -323,7 +435,8 @@ export default function PaymentsPage() {
     }
   }
 
-async function handleUploadReceipt(paymentId: number, file?: File | null) {
+  async function handleUploadReceipt(paymentId: number, file?: File | null) {
+    if (!isAdmin) return;
     if (!file) return;
 
     const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
@@ -341,7 +454,13 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
       const res = await fetch(`${API_URL}/payments/${paymentId}/receipt`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -371,13 +490,19 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
   }
 
   async function handleDeleteReceipt(paymentId: number) {
+    if (!isAdmin) return;
     if (!confirm("Remover comprovante deste pagamento?")) return;
     try {
       setDeletingReceiptId(paymentId);
       setError(null);
       const res = await fetch(`${API_URL}/payments/${paymentId}/receipt`, {
         method: "DELETE",
+        credentials: "include",
       });
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         throw new Error(data?.message || "Erro ao remover comprovante");
@@ -403,21 +528,33 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
 
   async function fetchReport(e?: React.FormEvent) {
     if (e) e.preventDefault();
+    if (!API_URL) {
+      setError("API URL nao configurada.");
+      return;
+    }
     try {
       setLoadingReport(true);
       setError(null);
 
       const params = new URLSearchParams();
       if (filterTypeId) params.append("paymentTypeId", filterTypeId);
-      if (filterStartDate) params.append("startDate", filterStartDate);
-      if (filterEndDate) params.append("endDate", filterEndDate);
+      const startIso = displayToIso(filterStartDate);
+      const endIso = displayToIso(filterEndDate);
+      if (startIso) params.append("startDate", startIso);
+      if (endIso) params.append("endDate", endIso);
 
       const url =
         params.toString().length > 0
           ? `${API_URL}/payments/report?${params.toString()}`
           : `${API_URL}/payments/report`;
 
-      const res = await fetch(url);
+      const res = await fetch(url, { credentials: "include" });
+
+      if (isUnauthorizedStatus(res.status)) {
+        redirectToLogin();
+        return;
+      }
+
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         throw new Error(data?.message || "Erro ao gerar relatorio");
@@ -433,8 +570,64 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
     }
   }
 
+  async function handleLogout() {
+    if (!API_URL) return;
+    try {
+      setLoggingOut(true);
+      await fetch(`${API_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err: any) {
+      setError(err.message || "Erro ao encerrar sessao");
+    } finally {
+      setLoggingOut(false);
+      redirectToLogin();
+    }
+  }
+
+  if (loadingUser) {
+    return (
+      <main className={styles.page}>
+        <p className={styles.loading}>Carregando sessao...</p>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.errorBanner}>
+          Sessao expirada ou usuario nao encontrado. Faca login novamente.
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className={styles.page}>
+      <section className={styles.topbar}>
+        <div className={styles.sessionInfo}>
+          <div className={styles.sessionDetails}>
+            <p className={styles.helperText}>Sessao ativa</p>
+            <h2>{user.name}</h2>
+            <p className={styles.muted}>{user.email}</p>
+          </div>
+          <div className={styles.sessionActions}>
+            <span className={styles.rolePill}>
+              {user.role === "admin" ? "Admin" : "Operador"}
+            </span>
+            <button
+              onClick={handleLogout}
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              disabled={loggingOut}
+            >
+              {loggingOut ? "Saindo..." : "Sair"}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.hero}>
         <div className={styles.heroText}>
           <p className={styles.kicker}>Financeiro</p>
@@ -480,9 +673,19 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
               <h2>{editingId ? "Editar pagamento" : "Novo pagamento"}</h2>
             </div>
             <span className={styles.badgeLight}>
-              {editingId ? "Editando registro" : "Cadastro rápido"}
+              {isAdmin
+                ? editingId
+                  ? "Editando registro"
+                  : "Cadastro rápido"
+                : "Apenas admin altera"}
             </span>
           </div>
+
+          {!isAdmin && (
+            <div className={styles.lockedMessage}>
+              Apenas administradores podem criar ou editar pagamentos.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className={styles.formGrid}>
             <div className={styles.field}>
@@ -494,6 +697,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                 maxLength={10}
                 placeholder="DD/MM/AAAA"
                 value={formDate}
+                disabled={!isAdmin}
                 onChange={(e) => setFormDate(sanitizeDateInput(e.target.value))}
               />
             </div>
@@ -503,6 +707,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
               <select
                 className={styles.input}
                 value={formTypeId}
+                disabled={!isAdmin}
                 onChange={(e) => setFormTypeId(e.target.value)}
               >
                 <option value="">Selecione...</option>
@@ -520,6 +725,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                 className={styles.input}
                 type="text"
                 value={formDescription}
+                disabled={!isAdmin}
                 onChange={(e) => setFormDescription(e.target.value)}
                 placeholder="Ex: Pagamento de folha - janeiro/2025"
               />
@@ -531,6 +737,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                 className={styles.input}
                 type="text"
                 value={formAmount}
+                disabled={!isAdmin}
                 onChange={(e) =>
                   setFormAmount(formatCurrencyInput(e.target.value))
                 }
@@ -543,6 +750,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
               <button
                 type="submit"
                 className={`${styles.btn} ${styles.btnPrimary}`}
+                disabled={!isAdmin}
               >
                 {editingId ? "Salvar edição" : "Criar pagamento"}
               </button>
@@ -552,6 +760,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                   type="button"
                   onClick={resetForm}
                   className={`${styles.btn} ${styles.btnSecondary}`}
+                  disabled={!isAdmin}
                 >
                   Cancelar
                 </button>
@@ -570,6 +779,12 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
             <span className={styles.badgeLight}>Auxiliar</span>
           </div>
 
+          {!isAdmin && (
+            <div className={styles.lockedMessage}>
+              Apenas administradores podem criar, editar ou remover tipos.
+            </div>
+          )}
+
           <form
             onSubmit={handlePaymentTypeSubmit}
             className={`${styles.formGrid} ${styles.filters}`}
@@ -580,6 +795,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                 className={styles.input}
                 type="text"
                 value={paymentTypeName}
+                disabled={!isAdmin}
                 onChange={(e) => setPaymentTypeName(e.target.value)}
                 placeholder="Ex: Manutenção predial"
               />
@@ -588,6 +804,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
               <button
                 type="submit"
                 className={`${styles.btn} ${styles.btnPrimary}`}
+                disabled={!isAdmin}
               >
                 {paymentTypeEditingId ? "Salvar tipo" : "Criar tipo"}
               </button>
@@ -596,6 +813,7 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                   type="button"
                   onClick={resetPaymentTypeForm}
                   className={`${styles.btn} ${styles.btnSecondary}`}
+                  disabled={!isAdmin}
                 >
                   Cancelar
                 </button>
@@ -629,32 +847,36 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                         ) : null}
                       </td>
                       <td>
-                        <div className={styles.actions}>
-                          <button
-                            onClick={() => handlePaymentTypeEdit(type)}
-                            className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
-                            disabled={!!type.inUse}
-                            title={
-                              type.inUse
-                                ? "Tipo em uso por pagamentos, nao pode ser editado."
-                                : undefined
-                            }
-                          >
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handlePaymentTypeDelete(type.id)}
-                            className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
-                            disabled={!!type.inUse}
-                            title={
-                              type.inUse
-                                ? "Tipo em uso por pagamentos, nao pode ser excluido."
-                                : undefined
-                            }
-                          >
-                            Excluir
-                          </button>
-                        </div>
+                        {isAdmin ? (
+                          <div className={styles.actions}>
+                            <button
+                              onClick={() => handlePaymentTypeEdit(type)}
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
+                              disabled={!isAdmin || !!type.inUse}
+                              title={
+                                type.inUse
+                                  ? "Tipo em uso por pagamentos, nao pode ser editado."
+                                  : undefined
+                              }
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handlePaymentTypeDelete(type.id)}
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                              disabled={!isAdmin || !!type.inUse}
+                              title={
+                                type.inUse
+                                  ? "Tipo em uso por pagamentos, nao pode ser excluido."
+                                  : undefined
+                              }
+                            >
+                              Excluir
+                            </button>
+                          </div>
+                        ) : (
+                          <span className={styles.muted}>Restrito a admin</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -860,38 +1082,42 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                     </td>
                     <td>
                       <div className={styles.actions}>
-                        <button
-                          onClick={() => handleEdit(p)}
-                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
-                        >
-                          Excluir
-                        </button>
-                        <label
-                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
-                        >
-                          {uploadingId === p.id
-                            ? "Enviando..."
-                            : p.receiptUrl
-                            ? "Alterar comprovante"
-                            : "Enviar comprovante"}
-                          <input
-                            type="file"
-                            accept="application/pdf,image/png,image/jpeg"
-                            className={styles.fileInput}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              handleUploadReceipt(p.id, file);
-                              e.target.value = "";
-                            }}
-                            disabled={uploadingId === p.id}
-                          />
-                        </label>
+                        {isAdmin && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(p)}
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleDelete(p.id)}
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                            >
+                              Excluir
+                            </button>
+                            <label
+                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+                            >
+                              {uploadingId === p.id
+                                ? "Enviando..."
+                                : p.receiptUrl
+                                ? "Alterar comprovante"
+                                : "Enviar comprovante"}
+                              <input
+                                type="file"
+                                accept="application/pdf,image/png,image/jpeg"
+                                className={styles.fileInput}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  handleUploadReceipt(p.id, file);
+                                  e.target.value = "";
+                                }}
+                                disabled={uploadingId === p.id || !isAdmin}
+                              />
+                            </label>
+                          </>
+                        )}
                         {p.receiptUrl && (
                           <>
                             <a
@@ -902,16 +1128,21 @@ async function handleUploadReceipt(paymentId: number, file?: File | null) {
                             >
                               Ver comprovante
                             </a>
-                            <button
-                              onClick={() => handleDeleteReceipt(p.id)}
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
-                              disabled={deletingReceiptId === p.id}
-                            >
-                              {deletingReceiptId === p.id
-                                ? "Removendo..."
-                                : "Remover comprovante"}
-                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDeleteReceipt(p.id)}
+                                className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                                disabled={deletingReceiptId === p.id}
+                              >
+                                {deletingReceiptId === p.id
+                                  ? "Removendo..."
+                                  : "Remover comprovante"}
+                              </button>
+                            )}
                           </>
+                        )}
+                        {!isAdmin && !p.receiptUrl && (
+                          <span className={styles.muted}>Apenas admin altera</span>
                         )}
                       </div>
                     </td>
