@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "user:create": "ts-node-dev --transpile-only src/scripts/createUser.ts",
+    "user:delete": "ts-node-dev --transpile-only src/scripts/deleteUser.ts"
   },
   "keywords": [],
   "author": "",
@@ -16,11 +18,14 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.689.0",
     "@aws-sdk/s3-request-presigner": "^3.689.0",
+    "bcryptjs": "^2.4.3",
     "celebrate": "^15.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "file-type": "^16.5.4",
+    "jsonwebtoken": "^9.0.2",
     "joi": "^18.0.2",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.15.3",
@@ -28,8 +33,10 @@
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.2",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/joi": "^17.2.2",
     "@types/multer": "^1.4.12",
     "@types/node": "^24.10.1",
