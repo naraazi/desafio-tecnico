@@ -225,6 +225,9 @@ export default function PaymentsPage() {
       }
     } catch (err: any) {
       alert(err.message || "Erro inesperado ao excluir tipo");
+      // Atualiza listagem para refletir flag de uso sem precisar de refresh manual
+      await fetchPaymentTypes();
+      await fetchPayments();
     }
   }
 
@@ -537,18 +540,38 @@ export default function PaymentsPage() {
                 <tbody>
                   {paymentTypes.map((type) => (
                     <tr key={type.id}>
-                      <td>{type.name}</td>
+                      <td>
+                        {type.name}
+                        {type.inUse ? (
+                          <>
+                            {" "}
+                            <span className={styles.badgeLight}>Em uso</span>
+                          </>
+                        ) : null}
+                      </td>
                       <td>
                         <div className={styles.actions}>
                           <button
                             onClick={() => handlePaymentTypeEdit(type)}
                             className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
+                            disabled={!!type.inUse}
+                            title={
+                              type.inUse
+                                ? "Tipo em uso por pagamentos, nao pode ser editado."
+                                : undefined
+                            }
                           >
                             Editar
                           </button>
                           <button
                             onClick={() => handlePaymentTypeDelete(type.id)}
                             className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
+                            disabled={!!type.inUse}
+                            title={
+                              type.inUse
+                                ? "Tipo em uso por pagamentos, nao pode ser excluido."
+                                : undefined
+                            }
                           >
                             Excluir
                           </button>

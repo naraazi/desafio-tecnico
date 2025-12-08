@@ -193,6 +193,17 @@
   transform: translateY(-1px);
 }
 
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+}
+
 .btnPrimary {
   background: var(--blue-600);
   color: #ffffff;

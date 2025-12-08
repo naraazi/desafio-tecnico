@@ -1,4 +1,5 @@
 import { PaymentType } from "../entities/PaymentType";
+import { getPaymentRepository } from "../repositories/PaymentRepository";
 import { getPaymentTypeRepository } from "../repositories/PaymentTypeRepository";
 import { AppError } from "../errors/AppError";
 
@@ -7,6 +8,20 @@ interface CreatePaymentTypeDTO {
 }
 
 export class PaymentTypeService {
+  private async ensureNotInUse(id: number) {
+    const paymentRepository = getPaymentRepository();
+    const inUseCount = await paymentRepository.count({
+      where: { paymentTypeId: id },
+    });
+
+    if (inUseCount > 0) {
+      throw new AppError(
+        "Tipo de pagamento esta em uso e nao pode ser alterado ou removido.",
+        409
+      );
+    }
+  }
+
   async create(data: CreatePaymentTypeDTO): Promise<PaymentType> {
     const paymentTypeRepository = getPaymentTypeRepository();
     const normalizedName = data.name.trim();
@@ -32,14 +47,30 @@ export class PaymentTypeService {
     return paymentType;
   }
 
-  async list(): Promise<PaymentType[]> {
+  async list(): Promise<(PaymentType & { inUse: boolean })[]> {
     const paymentTypeRepository = getPaymentTypeRepository();
+    const paymentRepository = getPaymentRepository();
+
+    const usageRows = await paymentRepository
+      .createQueryBuilder("payment")
+      .select("payment.paymentTypeId", "paymentTypeId")
+      .addSelect("COUNT(*)", "count")
+      .groupBy("payment.paymentTypeId")
+      .getRawMany<{ paymentTypeId: number; count: string }>();
+
+    const usageMap = new Map<number, number>();
+    usageRows.forEach((row) =>
+      usageMap.set(Number(row.paymentTypeId), Number(row.count))
+    );
 
     const paymentTypes = await paymentTypeRepository.find({
       order: { name: "ASC" },
     });
 
-    return paymentTypes;
+    return paymentTypes.map((type) => ({
+      ...type,
+      inUse: (usageMap.get(type.id) ?? 0) > 0,
+    }));
   }
 
   async update(id: number, data: CreatePaymentTypeDTO): Promise<PaymentType> {
@@ -54,6 +85,8 @@ export class PaymentTypeService {
     if (!paymentType) {
       throw new AppError("Tipo de pagamento nao encontrado.", 404);
     }
+
+    await this.ensureNotInUse(id);
 
     const duplicate = await paymentTypeRepository.findOne({
       where: { name: normalizedName },
@@ -76,6 +109,8 @@ export class PaymentTypeService {
     if (!paymentType) {
       throw new AppError("Tipo de pagamento nao encontrado.", 404);
     }
+
+    await this.ensureNotInUse(id);
 
     await paymentTypeRepository.remove(paymentType);
   }

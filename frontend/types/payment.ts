@@ -1,6 +1,7 @@
 export interface PaymentType {
   id: number;
   name: string;
+  inUse?: boolean;
 }
 
 export interface Payment {
