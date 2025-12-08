@@ -206,7 +206,7 @@ Ao subir o backend, são inseridos (se não existirem):
 ## Testes automatizados
 
 - Unitários com Vitest cobrindo regras de pagamento e tipos (`src/services/__tests__`), mockando repositórios e S3. Não dependem de MySQL nem de credenciais AWS.
-- Rodar localmente no backend: `npm test`. (Os testes não estão configurados para rodar via container.)
+- Rodar localmente no backend: `npm test`. (Os testes não estão configurados para rodar via container ou E2E.)
 
 ---
 
@@ -240,18 +240,19 @@ Ao subir o backend, são inseridos (se não existirem):
 - Frontend com CRUD, filtros, relatório e gestão de comprovantes
 - Docker/docker-compose
 - README atualizado com .env e exemplos
+- Testes unitários de serviços com Vitest
 
 ---
 
 ## O que eu faria se tivesse mais tempo
 
 - Reestruturar o frontend separando page.tsx em componentes menores
-- Implementar testes automatizados (Jest ou Vitest)
+- Ampliar cobertura de testes (integração/E2E) e automatizar execução em container
 - Criar migrations no TypeORM e remover `synchronize: true`
 
 ---
 
 ## Limitações conhecidas
 
-- Sem testes automatizados
+- Testes apenas unitários de serviços; sem integração/E2E
 - TypeORM usa `synchronize: true`; sem migrations
