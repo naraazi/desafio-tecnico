@@ -33,6 +33,14 @@ services:
       DB_PASS: cartorio
       DB_NAME: cartorio_payments
       APP_PORT: 3333
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-defina-uma-chave-forte-aqui}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      JWT_MAX_AGE_MS: ${JWT_MAX_AGE_MS:-86400000}
+      AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-auth_token}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
       AWS_REGION: ${AWS_REGION:-sa-east-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -53,6 +61,8 @@ services:
       - backend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3333
+      NEXT_PUBLIC_AUTH_COOKIE_NAME: ${AUTH_COOKIE_NAME:-auth_token}
+      JWT_SECRET: ${JWT_SECRET:-defina-uma-chave-forte-aqui}
       PORT: 3000
     ports:
       - "3000:3000"
