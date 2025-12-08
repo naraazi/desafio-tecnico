@@ -77,7 +77,9 @@ export default function PaymentsPage() {
   const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
   const [loadingReport, setLoadingReport] = useState(false);
   const [uploadingId, setUploadingId] = useState<number | null>(null);
-  const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(null);
+  const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(
+    null
+  );
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
@@ -165,14 +167,14 @@ export default function PaymentsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-      if (!formDate || !formTypeId || !formDescription || !formAmount) {
-        alert("Preencha todos os campos");
-        return;
-      }
-      if (!displayToIso(formDate)) {
-        alert("Data invalida. Use DD/MM/AAAA.");
-        return;
-      }
+    if (!formDate || !formTypeId || !formDescription || !formAmount) {
+      alert("Preencha todos os campos");
+      return;
+    }
+    if (!displayToIso(formDate)) {
+      alert("Data invalida. Use DD/MM/AAAA.");
+      return;
+    }
 
     try {
       setError(null);
@@ -522,7 +524,9 @@ export default function PaymentsPage() {
                 className={styles.input}
                 type="text"
                 value={formAmount}
-                onChange={(e) => setFormAmount(formatCurrencyInput(e.target.value))}
+                onChange={(e) =>
+                  setFormAmount(formatCurrencyInput(e.target.value))
+                }
                 inputMode="decimal"
                 placeholder="0,00"
               />
@@ -682,40 +686,40 @@ export default function PaymentsPage() {
 
           <div className={styles.field}>
             <label className={styles.label}>Data inicial</label>
-              <input
-                className={styles.input}
-                type="text"
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="DD/MM/AAAA"
-                value={filterStartDate}
-                onChange={(e) =>
-                  setFilterStartDate(sanitizeDateInput(e.target.value))
-                }
-              />
-            </div>
+            <input
+              className={styles.input}
+              type="text"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="DD/MM/AAAA"
+              value={filterStartDate}
+              onChange={(e) =>
+                setFilterStartDate(sanitizeDateInput(e.target.value))
+              }
+            />
+          </div>
 
           <div className={styles.field}>
             <label className={styles.label}>Data final</label>
-              <input
-                className={styles.input}
-                type="text"
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="DD/MM/AAAA"
-                value={filterEndDate}
-                onChange={(e) =>
-                  setFilterEndDate(sanitizeDateInput(e.target.value))
-                }
-              />
-            </div>
+            <input
+              className={styles.input}
+              type="text"
+              inputMode="numeric"
+              maxLength={10}
+              placeholder="DD/MM/AAAA"
+              value={filterEndDate}
+              onChange={(e) =>
+                setFilterEndDate(sanitizeDateInput(e.target.value))
+              }
+            />
+          </div>
 
-          <div className={styles.actions}>
+          <div className={styles.actionsInline}>
             <button
               type="submit"
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              Aplicar filtros
+              Aplicar
             </button>
             <button
               type="button"
@@ -861,7 +865,9 @@ export default function PaymentsPage() {
                         >
                           Excluir
                         </button>
-                        <label className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}>
+                        <label
+                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+                        >
                           {uploadingId === p.id
                             ? "Enviando..."
                             : p.receiptUrl
