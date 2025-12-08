@@ -71,6 +71,14 @@ DB_USER=seu_usuario
 DB_PASS=sua_senha
 DB_NAME=cartorio_payments
 APP_PORT=3333
+FRONTEND_URL=http://localhost:3000
+CORS_ORIGINS=http://localhost:3000
+JWT_SECRET=sua_chave_jwt_segura_aqui
+JWT_EXPIRES_IN=1d
+JWT_MAX_AGE_MS=86400000
+AUTH_COOKIE_NAME=auth_token
+COOKIE_SECURE=false
+COOKIE_SAMESITE=lax
 AWS_REGION=sa-east-1
 AWS_ACCESS_KEY_ID=sua_access_key
 AWS_SECRET_ACCESS_KEY=sua_secret_key
@@ -84,12 +92,16 @@ Backend:
 cd backend
 npm install
 npm run dev
+# criar usuarios admin/operator
+npm run user:create
 ```
 
 Frontend (`frontend/.env.local`):
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3333
+NEXT_PUBLIC_AUTH_COOKIE_NAME=auth_token
+JWT_SECRET=mesma_chave_jwt_do_backend
 ```
 
 ```
@@ -110,6 +122,7 @@ URLs: Frontend http://localhost:3000 | API http://localhost:3333
 MySQL exposto na porta 3307 do host.  
 Env exemplo em `backend/.env.docker.example` e `frontend/.env.local.example`.
 Para o docker-compose receber as credenciais AWS/S3, crie um `.env` na raiz do projeto (mesmo nível do `docker-compose.yml`) com: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `BUCKET_PRIVADO`.
+Defina também `JWT_SECRET` no `.env` da raiz para que backend e frontend compartilhem a mesma chave.
 
 ---
 
@@ -134,11 +147,31 @@ Ao subir o backend, são inseridos (se não existirem):
 - Estorno
 - Manutenção predial
 
+Usuários não são criados automaticamente. Crie admin/operator manualmente com:
+
+```
+cd backend
+npm run user:create
+```
+
 ---
 
 ## API - Endpoints disponíveis e exemplos
 
+### /auth (todas via cookie HttpOnly)
+
+- POST /auth/login  
+  Body: `{ "email": "admin@email.com", "password": "sua_senha" }`  
+  Gera cookie `auth_token` HttpOnly.
+- GET /auth/me  
+  Retorna usuário autenticado e papel (admin/operator).
+- POST /auth/logout  
+  Limpa o cookie de sessão.
+
+> Todas as demais rotas requerem estar autenticado via cookie ou Bearer.
+
 ### /payment-types
+- Rotas POST/PUT/DELETE requerem role `admin`.
 
 - GET /payment-types  
   Ex.: `curl http://localhost:3333/payment-types`
@@ -150,6 +183,7 @@ Ao subir o backend, são inseridos (se não existirem):
   Ex.: `curl -X DELETE http://localhost:3333/payment-types/1`
 
 ### /payments
+- GET/GET:report acessíveis a `admin` e `operator`. Demais rotas (POST/PUT/DELETE, upload/remover recibo) requerem `admin`.
 
 - GET /payments  
   Com filtros: `curl "http://localhost:3333/payments?paymentTypeId=1&startDate=2025-01-01&endDate=2025-01-31"`
@@ -219,6 +253,7 @@ Ao subir o backend, são inseridos (se não existirem):
 - CRUD de tipos com tabela dedicada
 - Upload/substituição/remoção de comprovante a partir da tabela
 - Formatação de datas/valores e selects dinâmicos
+- Tela de login e proteção de rotas via middleware (RBAC admin/operator; operadores têm UI somente leitura)
 
 ---
 
@@ -226,6 +261,7 @@ Ao subir o backend, são inseridos (se não existirem):
 
 - Celebrate/Joi em body/query/params.
 - Regras: normalização de data/descrição/valor; não permitir duplicados (data+tipo+descrição+valor); checagem de FK; tipos com nome único; 404 para não encontrados.
+- RBAC: rotas sensíveis requerem `admin`; consultas podem ser feitas por `operator`.
 
 ---
 
@@ -237,6 +273,7 @@ Ao subir o backend, são inseridos (se não existirem):
 - Upload de comprovante com Multer + S3 (substituir/remover)
 - Regra de não-duplicidade e checagem de FK
 - Validações com Celebrate/Joi
+- Autenticação via JWT em cookie HttpOnly + RBAC (admin/operator) protegendo API e UI (Next middleware)
 - Frontend com CRUD, filtros, relatório e gestão de comprovantes
 - Docker/docker-compose
 - README atualizado com .env e exemplos
