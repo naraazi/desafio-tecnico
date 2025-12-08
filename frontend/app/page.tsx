@@ -19,6 +19,56 @@ function formatDate(date: string): string {
   return `${day}/${month}/${year}`;
 }
 
+// Mantém input no formato DD/MM/YYYY enquanto digita
+function sanitizeDateInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 8); // DDMMYYYY
+  const day = digits.slice(0, 2);
+  const month = digits.slice(2, 4);
+  const year = digits.slice(4, 8);
+
+  if (digits.length <= 2) return day;
+  if (digits.length <= 4) return `${day}/${month}`;
+  return `${day}/${month}/${year}`;
+}
+
+function displayToIso(date: string): string | null {
+  const [day, month, year] = date.split("/");
+  if (day?.length === 2 && month?.length === 2 && year?.length === 4) {
+    return `${year}-${month}-${day}`;
+  }
+  return null;
+}
+
+function isoToDisplay(iso: string): string {
+  const onlyDate = iso.substring(0, 10);
+  const [year, month, day] = onlyDate.split("-");
+  if (year && month && day) return `${day}/${month}/${year}`;
+  return iso;
+}
+
+function formatCurrencyInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  const number = Number(digits) / 100;
+  return number.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function parseCurrency(value: string): number {
+  const normalized = value.replace(/\./g, "").replace(",", ".");
+  return Number(normalized);
+}
+
+function formatCurrencyFromNumber(value: number): string {
+  if (typeof value !== "number") return "";
+  return value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function PaymentsPage() {
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -77,8 +127,10 @@ export default function PaymentsPage() {
 
       const params = new URLSearchParams();
       if (filterTypeId) params.append("paymentTypeId", filterTypeId);
-      if (filterStartDate) params.append("startDate", filterStartDate);
-      if (filterEndDate) params.append("endDate", filterEndDate);
+      const startIso = displayToIso(filterStartDate);
+      const endIso = displayToIso(filterEndDate);
+      if (startIso) params.append("startDate", startIso);
+      if (endIso) params.append("endDate", endIso);
 
       const url =
         params.toString().length > 0
@@ -113,20 +165,33 @@ export default function PaymentsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!formDate || !formTypeId || !formDescription || !formAmount) {
-      alert("Preencha todos os campos");
-      return;
-    }
+      if (!formDate || !formTypeId || !formDescription || !formAmount) {
+        alert("Preencha todos os campos");
+        return;
+      }
+      if (!displayToIso(formDate)) {
+        alert("Data invalida. Use DD/MM/AAAA.");
+        return;
+      }
 
     try {
       setError(null);
 
+      const amountValue = parseCurrency(formAmount);
+      if (Number.isNaN(amountValue)) {
+        throw new Error("Valor invalido.");
+      }
+
       const body = {
-        date: formDate,
+        date: displayToIso(formDate) || "",
         paymentTypeId: Number(formTypeId),
         description: formDescription,
-        amount: Number(formAmount.replace(",", ".")),
+        amount: amountValue,
       };
+
+      if (!displayToIso(formDate)) {
+        throw new Error("Data invalida. Use DD/MM/AAAA.");
+      }
 
       const isEditing = editingId !== null;
       const url = isEditing
@@ -233,10 +298,10 @@ export default function PaymentsPage() {
 
   function handleEdit(payment: Payment) {
     setEditingId(payment.id);
-    setFormDate(payment.date.substring(0, 10)); // garante formato YYYY-MM-DD
+    setFormDate(isoToDisplay(payment.date)); // mostra DD/MM/YYYY
     setFormTypeId(String(payment.paymentTypeId));
     setFormDescription(payment.description);
-    setFormAmount(String(payment.amount));
+    setFormAmount(formatCurrencyFromNumber(Number(payment.amount)));
   }
 
   async function handleDelete(id: number) {
@@ -415,9 +480,12 @@ export default function PaymentsPage() {
               <label className={styles.label}>Data</label>
               <input
                 className={styles.input}
-                type="date"
+                type="text"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="DD/MM/AAAA"
                 value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
+                onChange={(e) => setFormDate(sanitizeDateInput(e.target.value))}
               />
             </div>
 
@@ -452,11 +520,11 @@ export default function PaymentsPage() {
               <label className={styles.label}>Valor</label>
               <input
                 className={styles.input}
-                type="number"
-                step="0.01"
+                type="text"
                 value={formAmount}
-                onChange={(e) => setFormAmount(e.target.value)}
-                placeholder="3,500"
+                onChange={(e) => setFormAmount(formatCurrencyInput(e.target.value))}
+                inputMode="decimal"
+                placeholder="0,00"
               />
             </div>
 
@@ -614,23 +682,33 @@ export default function PaymentsPage() {
 
           <div className={styles.field}>
             <label className={styles.label}>Data inicial</label>
-            <input
-              className={styles.input}
-              type="date"
-              value={filterStartDate}
-              onChange={(e) => setFilterStartDate(e.target.value)}
-            />
-          </div>
+              <input
+                className={styles.input}
+                type="text"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="DD/MM/AAAA"
+                value={filterStartDate}
+                onChange={(e) =>
+                  setFilterStartDate(sanitizeDateInput(e.target.value))
+                }
+              />
+            </div>
 
           <div className={styles.field}>
             <label className={styles.label}>Data final</label>
-            <input
-              className={styles.input}
-              type="date"
-              value={filterEndDate}
-              onChange={(e) => setFilterEndDate(e.target.value)}
-            />
-          </div>
+              <input
+                className={styles.input}
+                type="text"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="DD/MM/AAAA"
+                value={filterEndDate}
+                onChange={(e) =>
+                  setFilterEndDate(sanitizeDateInput(e.target.value))
+                }
+              />
+            </div>
 
           <div className={styles.actions}>
             <button
