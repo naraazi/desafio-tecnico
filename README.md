@@ -3,12 +3,14 @@
 Sistema para cadastro e consulta de pagamentos de um cartorio, desenvolvido como desafio tecnico para vaga de Desenvolvedor Web Pleno.
 
 O projeto é dividido em dois módulos:
+
 - **backend/** - API REST em Node.js + TypeScript + Express + TypeORM + MySQL
 - **frontend/** - Interface web em Next.js (App Router) + React, consumindo a API via `fetch`
 
 ---
 
 ## Sumário
+
 1. Tecnologias utilizadas
 2. Estrutura do projeto
 3. Como rodar o projeto
@@ -25,7 +27,9 @@ O projeto é dividido em dois módulos:
 ---
 
 ## Tecnologias utilizadas
+
 ### Backend
+
 - Node.js
 - TypeScript
 - Express
@@ -36,6 +40,7 @@ O projeto é dividido em dois módulos:
 - dotenv
 
 ### Frontend
+
 - Next.js (App Router)
 - React
 - TypeScript
@@ -44,16 +49,20 @@ O projeto é dividido em dois módulos:
 ---
 
 ## Estrutura do projeto
+
 - backend/src com controllers, services, repositories, entities, routes, database, validations.
 - frontend/app com page.tsx e layout.tsx.
 
 ---
 
 ## Como rodar o projeto
+
 ### Opção 1: Ambiente local
+
 Pré-requisitos: Node.js, MySQL, npm ou yarn.
 
 Crie `backend/.env`:
+
 ```
 DB_HOST=localhost
 DB_PORT=3306
@@ -64,11 +73,12 @@ APP_PORT=3333
 AWS_REGION=sa-east-1
 AWS_ACCESS_KEY_ID=sua_access_key
 AWS_SECRET_ACCESS_KEY=sua_secret_key
-S3_BUCKET=cartorio-payments-receipt
+S3_BUCKET=seu_bucket_s3_aqui
 BUCKET_PRIVADO=true
 ```
 
 Backend:
+
 ```
 cd backend
 npm install
@@ -76,9 +86,11 @@ npm run dev
 ```
 
 Frontend (`frontend/.env.local`):
+
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3333
 ```
+
 ```
 cd frontend
 npm install
@@ -86,10 +98,13 @@ npm run dev
 ```
 
 ### Opção 2: Docker / docker-compose
+
 Pré-requisitos: Docker + Docker Compose.
+
 ```
 docker-compose up -d --build
 ```
+
 URLs: Frontend http://localhost:3000 | API http://localhost:3333  
 MySQL exposto na porta 3307 do host.  
 Env exemplo em `backend/.env.docker.example` e `frontend/.env.local.example`.
@@ -98,16 +113,21 @@ Para o docker-compose receber as credenciais AWS/S3, crie um `.env` na raiz do p
 ---
 
 ## Modelo de dados
+
 ### PaymentType
+
 - id, name, createdAt, updatedAt
 
 ### Payment
+
 - id, date, paymentTypeId, description, amount, receiptPath (opcional), createdAt, updatedAt
 
 ---
 
 ## Seeds iniciais
+
 Ao subir o backend, são inseridos (se não existirem):
+
 - Folha de pagamento
 - Combustível
 - Estorno
@@ -116,7 +136,9 @@ Ao subir o backend, são inseridos (se não existirem):
 ---
 
 ## API - Endpoints disponíveis e exemplos
+
 ### /payment-types
+
 - GET /payment-types  
   Ex.: `curl http://localhost:3333/payment-types`
 - POST /payment-types  
@@ -127,6 +149,7 @@ Ao subir o backend, são inseridos (se não existirem):
   Ex.: `curl -X DELETE http://localhost:3333/payment-types/1`
 
 ### /payments
+
 - GET /payments  
   Com filtros: `curl "http://localhost:3333/payments?paymentTypeId=1&startDate=2025-01-01&endDate=2025-01-31"`
 - GET /payments/:id  
@@ -157,7 +180,7 @@ Ao subir o backend, são inseridos (se não existirem):
 - DELETE /payments/:id  
   Ex.: `curl -X DELETE http://localhost:3333/payments/1`
 - POST /payments/:id/receipt  
-  Envie/substitua comprovante (PDF/JPG/PNG).  
+  Envie/substitua comprovante (PDF/JPG/PNG).
   ```bash
   curl -X POST http://localhost:3333/payments/1/receipt \
     -H "Content-Type: multipart/form-data" \
@@ -170,6 +193,7 @@ Ao subir o backend, são inseridos (se não existirem):
 ---
 
 ## Testes rápidos de API (curl)
+
 - Criar tipo: `curl -X POST http://localhost:3333/payment-types -H "Content-Type: application/json" -d '{"name":"Combustivel"}'`
 - Criar pagamento: `curl -X POST http://localhost:3333/payments -H "Content-Type: application/json" -d '{"date":"2025-01-20","paymentTypeId":1,"description":"Pagamento","amount":150}'`
 - Enviar comprovante: `curl -X POST http://localhost:3333/payments/1/receipt -F "file=@/caminho/arquivo.pdf"`
@@ -179,6 +203,7 @@ Ao subir o backend, são inseridos (se não existirem):
 ---
 
 ## Frontend - Funcionalidades
+
 - Listagem de pagamentos
 - Filtros por tipo e período
 - Relatório por período (total + lista)
@@ -190,12 +215,14 @@ Ao subir o backend, são inseridos (se não existirem):
 ---
 
 ## Validações e regras de negócio
+
 - Celebrate/Joi em body/query/params.
 - Regras: normalização de data/descrição/valor; não permitir duplicados (data+tipo+descrição+valor); checagem de FK; tipos com nome único; 404 para não encontrados.
 
 ---
 
 ## O que foi implementado
+
 - API completa de pagamentos e tipos (CRUD + filtros)
 - Seeds dos tipos sugeridos
 - Relatório por período com totalizador
@@ -209,6 +236,7 @@ Ao subir o backend, são inseridos (se não existirem):
 ---
 
 ## O que eu faria se tivesse mais tempo
+
 - Reestruturar o frontend separando page.tsx em componentes menores
 - Implementar testes automatizados (Jest ou Vitest)
 - Criar migrations no TypeORM e remover `synchronize: true`
@@ -216,5 +244,6 @@ Ao subir o backend, são inseridos (se não existirem):
 ---
 
 ## Limitações conhecidas
+
 - Sem testes automatizados
 - TypeORM usa `synchronize: true`; sem migrations
