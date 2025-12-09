@@ -9,5 +9,9 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov"],
     },
+    // Filtra logs do dotenv para não poluir saída de teste
+    onConsoleLog(log) {
+      if (log.includes("[dotenv@")) return false;
+    },
   },
 });
