@@ -96,7 +96,7 @@ npm run dev
 npm run user:create
 ```
 
-Frontend (`frontend/.env.local`):
+Frontend (`frontend/.env`):
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3333
@@ -118,11 +118,11 @@ Pré-requisitos: Docker + Docker Compose.
 docker-compose up -d --build
 ```
 
-URLs: Frontend http://localhost:3000 | API http://localhost:3333  
-MySQL exposto na porta 3307 do host.  
-Env exemplo em `backend/.env.docker.example` e `frontend/.env.local.example`.
-Para o docker-compose receber as credenciais AWS/S3, crie um `.env` na raiz do projeto (mesmo nível do `docker-compose.yml`) com: `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET`, `BUCKET_PRIVADO`.
-Defina também `JWT_SECRET` no `.env` da raiz para que backend e frontend compartilhem a mesma chave.
+URLs: Frontend http://localhost:3000 | API http://localhost:3333
+
+MySQL exposto na porta 3307 do host.
+
+Para o docker-compose receber as credenciais adequadas, crie um `.env` na raiz do projeto (mesmo nível do `docker-compose.yml`).
 
 ---
 
@@ -171,6 +171,7 @@ npm run user:create
 > Todas as demais rotas requerem estar autenticado via cookie ou Bearer.
 
 ### /payment-types
+
 - Rotas POST/PUT/DELETE requerem role `admin`.
 
 - GET /payment-types  
@@ -183,6 +184,7 @@ npm run user:create
   Ex.: `curl -X DELETE http://localhost:3333/payment-types/1`
 
 ### /payments
+
 - GET/GET:report acessíveis a `admin` e `operator`. Demais rotas (POST/PUT/DELETE, upload/remover recibo) requerem `admin`.
 
 - GET /payments  
