@@ -2,74 +2,29 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type React from "react";
 import type {
   Payment,
   PaymentReportResponse,
   PaymentType,
 } from "../types/payment";
 import type { User } from "../types/user";
+import { SessionTopbar } from "./components/SessionTopbar";
+import { PaymentForm } from "./components/PaymentForm";
+import { PaymentTypeManager } from "./components/PaymentTypeManager";
+import { FiltersPanel } from "./components/FiltersPanel";
+import { ReportPanel } from "./components/ReportPanel";
+import { PaymentsTable } from "./components/PaymentsTable";
+import {
+  displayToIso,
+  formatCurrencyFromNumber,
+  formatCurrencyInput,
+  isoToDisplay,
+  parseCurrency,
+  sanitizeDateInput,
+} from "./utils/formatters";
 import styles from "./page.module.css";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// formata "2025-12-05" -> "05/12/2025"
-function formatDate(date: string): string {
-  const onlyDate = date.substring(0, 10); // garante YYYY-MM-DD
-  const [year, month, day] = onlyDate.split("-");
-  if (!year || !month || !day) return date;
-  return `${day}/${month}/${year}`;
-}
-
-// Mantém input no formato DD/MM/YYYY enquanto digita
-function sanitizeDateInput(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 8); // DDMMYYYY
-  const day = digits.slice(0, 2);
-  const month = digits.slice(2, 4);
-  const year = digits.slice(4, 8);
-
-  if (digits.length <= 2) return day;
-  if (digits.length <= 4) return `${day}/${month}`;
-  return `${day}/${month}/${year}`;
-}
-
-function displayToIso(date: string): string | null {
-  const [day, month, year] = date.split("/");
-  if (day?.length === 2 && month?.length === 2 && year?.length === 4) {
-    return `${year}-${month}-${day}`;
-  }
-  return null;
-}
-
-function isoToDisplay(iso: string): string {
-  const onlyDate = iso.substring(0, 10);
-  const [year, month, day] = onlyDate.split("-");
-  if (year && month && day) return `${day}/${month}/${year}`;
-  return iso;
-}
-
-function formatCurrencyInput(value: string): string {
-  const digits = value.replace(/\D/g, "");
-  if (!digits) return "";
-  const number = Number(digits) / 100;
-  return number.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function parseCurrency(value: string): number {
-  const normalized = value.replace(/\./g, "").replace(",", ".");
-  return Number(normalized);
-}
-
-function formatCurrencyFromNumber(value: number): string {
-  if (typeof value !== "number") return "";
-  return value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 function redirectToLogin() {
   if (typeof window !== "undefined") {
@@ -271,10 +226,6 @@ export default function PaymentsPage() {
         amount: amountValue,
       };
 
-      if (!displayToIso(formDate)) {
-        throw new Error("Data invalida. Use DD/MM/AAAA.");
-      }
-
       const isEditing = editingId !== null;
       const url = isEditing
         ? `${API_URL}/payments/${editingId}`
@@ -396,7 +347,6 @@ export default function PaymentsPage() {
       }
     } catch (err: any) {
       alert(err.message || "Erro inesperado ao excluir tipo");
-      // Atualiza listagem para refletir flag de uso sem precisar de refresh manual
       await fetchPaymentTypes();
       await fetchPayments();
     }
@@ -405,7 +355,7 @@ export default function PaymentsPage() {
   function handleEdit(payment: Payment) {
     if (!isAdmin) return;
     setEditingId(payment.id);
-    setFormDate(isoToDisplay(payment.date)); // mostra DD/MM/YYYY
+    setFormDate(isoToDisplay(payment.date));
     setFormTypeId(String(payment.paymentTypeId));
     setFormDescription(payment.description);
     setFormAmount(formatCurrencyFromNumber(Number(payment.amount)));
@@ -612,36 +562,16 @@ export default function PaymentsPage() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.topbar}>
-        <div className={styles.sessionInfo}>
-          <div className={styles.sessionDetails}>
-            <p className={styles.helperText}>Sessao ativa</p>
-            <h2>{user.name}</h2>
-            <p className={styles.muted}>{user.email}</p>
-          </div>
-          <div className={styles.sessionActions}>
-            <span className={styles.rolePill}>
-              {user.role === "admin" ? "Admin" : "Operador"}
-            </span>
-            <button
-              onClick={handleLogout}
-              className={`${styles.btn} ${styles.btnSecondary}`}
-              disabled={loggingOut}
-            >
-              {loggingOut ? "Saindo..." : "Sair"}
-            </button>
-          </div>
-        </div>
-      </section>
+      <SessionTopbar user={user} onLogout={handleLogout} loggingOut={loggingOut} />
 
       <section className={styles.hero}>
         <div className={styles.heroText}>
           <p className={styles.kicker}>Financeiro</p>
           <h1 className={styles.heroTitle}>
-            Controle de pagamentos e transferências
+            Controle de pagamentos e transferencias
           </h1>
           <p className={styles.heroSubtitle}>
-            Cartório 1º Ofício de Notas e Registros de Imóveis de Santarém - PA
+            Cartorio 1o Oficio de Notas e Registros de Imoveis de Santarem - PA
           </p>
         </div>
         <div className={styles.heroCard}>
@@ -672,493 +602,67 @@ export default function PaymentsPage() {
       {error && <div className={styles.errorBanner}>{error}</div>}
 
       <section className={styles.split}>
-        <section className={`${styles.panel} ${styles.panelAccent}`}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className={styles.helperText}>Lançamentos</p>
-              <h2>{editingId ? "Editar pagamento" : "Novo pagamento"}</h2>
-            </div>
-            <span className={styles.badgeLight}>
-              {isAdmin
-                ? editingId
-                  ? "Editando registro"
-                  : "Cadastro rápido"
-                : "Apenas admin altera"}
-            </span>
-          </div>
+        <PaymentForm
+          isAdmin={isAdmin}
+          paymentTypes={paymentTypes}
+          editingId={editingId}
+          formDate={formDate}
+          formTypeId={formTypeId}
+          formDescription={formDescription}
+          formAmount={formAmount}
+          onDateChange={(value) => setFormDate(sanitizeDateInput(value))}
+          onTypeChange={(value) => setFormTypeId(value)}
+          onDescriptionChange={(value) => setFormDescription(value)}
+          onAmountChange={(value) => setFormAmount(formatCurrencyInput(value))}
+          onSubmit={handleSubmit}
+          onCancel={resetForm}
+        />
 
-          {!isAdmin && (
-            <div className={styles.lockedMessage}>
-              Apenas administradores podem criar ou editar pagamentos.
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className={styles.formGrid}>
-            <div className={styles.field}>
-              <label className={styles.label}>Data</label>
-              <input
-                className={styles.input}
-                type="text"
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="DD/MM/AAAA"
-                value={formDate}
-                disabled={!isAdmin}
-                onChange={(e) => setFormDate(sanitizeDateInput(e.target.value))}
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Tipo de pagamento</label>
-              <select
-                className={styles.input}
-                value={formTypeId}
-                disabled={!isAdmin}
-                onChange={(e) => setFormTypeId(e.target.value)}
-              >
-                <option value="">Selecione...</option>
-                {paymentTypes.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Descrição</label>
-              <input
-                className={styles.input}
-                type="text"
-                value={formDescription}
-                disabled={!isAdmin}
-                onChange={(e) => setFormDescription(e.target.value)}
-                placeholder="Ex: Pagamento de folha - janeiro/2025"
-              />
-            </div>
-
-            <div className={styles.field}>
-              <label className={styles.label}>Valor</label>
-              <input
-                className={styles.input}
-                type="text"
-                value={formAmount}
-                disabled={!isAdmin}
-                onChange={(e) =>
-                  setFormAmount(formatCurrencyInput(e.target.value))
-                }
-                inputMode="decimal"
-                placeholder="0,00"
-              />
-            </div>
-
-            <div className={styles.actions}>
-              <button
-                type="submit"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                disabled={!isAdmin}
-              >
-                {editingId ? "Salvar edição" : "Criar pagamento"}
-              </button>
-
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className={`${styles.btn} ${styles.btnSecondary}`}
-                  disabled={!isAdmin}
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
-          </form>
-        </section>
-
-        {/* Gerenciar Tipos */}
-        <section className={styles.panel}>
-          <div className={styles.sectionHeader}>
-            <div>
-              <p className={styles.helperText}>Tipos de pagamento</p>
-              <h2>Gerenciar tipos</h2>
-            </div>
-            <span className={styles.badgeLight}>Auxiliar</span>
-          </div>
-
-          {!isAdmin && (
-            <div className={styles.lockedMessage}>
-              Apenas administradores podem criar, editar ou remover tipos.
-            </div>
-          )}
-
-          <form
-            onSubmit={handlePaymentTypeSubmit}
-            className={`${styles.formGrid} ${styles.filters}`}
-          >
-            <div className={styles.field}>
-              <label className={styles.label}>Nome</label>
-              <input
-                className={styles.input}
-                type="text"
-                value={paymentTypeName}
-                disabled={!isAdmin}
-                onChange={(e) => setPaymentTypeName(e.target.value)}
-                placeholder="Ex: Manutenção predial"
-              />
-            </div>
-            <div className={styles.actions}>
-              <button
-                type="submit"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                disabled={!isAdmin}
-              >
-                {paymentTypeEditingId ? "Salvar tipo" : "Criar tipo"}
-              </button>
-              {paymentTypeEditingId && (
-                <button
-                  type="button"
-                  onClick={resetPaymentTypeForm}
-                  className={`${styles.btn} ${styles.btnSecondary}`}
-                  disabled={!isAdmin}
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
-          </form>
-
-          {loadingPaymentTypes ? (
-            <p className={styles.loading}>Carregando tipos...</p>
-          ) : paymentTypes.length === 0 ? (
-            <p className={styles.empty}>Nenhum tipo cadastrado.</p>
-          ) : (
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paymentTypes.map((type) => (
-                    <tr key={type.id}>
-                      <td>
-                        {type.name}
-                        {type.inUse ? (
-                          <>
-                            {" "}
-                            <span className={styles.badgeLight}>Em uso</span>
-                          </>
-                        ) : null}
-                      </td>
-                      <td>
-                        {isAdmin ? (
-                          <div className={styles.actions}>
-                            <button
-                              onClick={() => handlePaymentTypeEdit(type)}
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
-                              disabled={!isAdmin || !!type.inUse}
-                              title={
-                                type.inUse
-                                  ? "Tipo em uso por pagamentos, nao pode ser editado."
-                                  : undefined
-                              }
-                            >
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => handlePaymentTypeDelete(type.id)}
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
-                              disabled={!isAdmin || !!type.inUse}
-                              title={
-                                type.inUse
-                                  ? "Tipo em uso por pagamentos, nao pode ser excluido."
-                                  : undefined
-                              }
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        ) : (
-                          <span className={styles.muted}>Restrito a admin</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        <PaymentTypeManager
+          isAdmin={isAdmin}
+          paymentTypes={paymentTypes}
+          paymentTypeName={paymentTypeName}
+          paymentTypeEditingId={paymentTypeEditingId}
+          loadingPaymentTypes={loadingPaymentTypes}
+          onNameChange={setPaymentTypeName}
+          onSubmit={handlePaymentTypeSubmit}
+          onCancel={resetPaymentTypeForm}
+          onEdit={handlePaymentTypeEdit}
+          onDelete={handlePaymentTypeDelete}
+        />
       </section>
 
-      {/* Filtros */}
-      <section className={styles.panel}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <p className={styles.helperText}>Explorar</p>
-            <h2>Filtros</h2>
-          </div>
-          <span className={styles.badgeLight}>Busca refinada</span>
-        </div>
-        <form onSubmit={handleApplyFilters} className={styles.formGrid}>
-          <div className={styles.field}>
-            <label className={styles.label}>Tipo de pagamento</label>
-            <select
-              className={styles.input}
-              value={filterTypeId}
-              onChange={(e) => setFilterTypeId(e.target.value)}
-            >
-              <option value="">Todos</option>
-              {paymentTypes.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <FiltersPanel
+        paymentTypes={paymentTypes}
+        filterTypeId={filterTypeId}
+        filterStartDate={filterStartDate}
+        filterEndDate={filterEndDate}
+        onTypeChange={setFilterTypeId}
+        onStartDateChange={(value) => setFilterStartDate(sanitizeDateInput(value))}
+        onEndDateChange={(value) => setFilterEndDate(sanitizeDateInput(value))}
+        onApply={handleApplyFilters}
+        onReport={fetchReport}
+      />
 
-          <div className={styles.field}>
-            <label className={styles.label}>Data inicial</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="DD/MM/AAAA"
-              value={filterStartDate}
-              onChange={(e) =>
-                setFilterStartDate(sanitizeDateInput(e.target.value))
-              }
-            />
-          </div>
+      <ReportPanel
+        loadingReport={loadingReport}
+        reportTotal={reportTotal}
+        reportPayments={reportPayments}
+        paymentTypes={paymentTypes}
+      />
 
-          <div className={styles.field}>
-            <label className={styles.label}>Data final</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              maxLength={10}
-              placeholder="DD/MM/AAAA"
-              value={filterEndDate}
-              onChange={(e) =>
-                setFilterEndDate(sanitizeDateInput(e.target.value))
-              }
-            />
-          </div>
-
-          <div className={styles.actionsInline}>
-            <button
-              type="submit"
-              className={`${styles.btn} ${styles.btnPrimary}`}
-            >
-              Aplicar
-            </button>
-            <button
-              type="button"
-              onClick={() => fetchReport()}
-              className={`${styles.btn} ${styles.btnSecondary}`}
-            >
-              Gerar relatorio
-            </button>
-          </div>
-        </form>
-      </section>
-
-      {/* Relatorio */}
-      <section className={styles.panel}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <p className={styles.helperText}>Resumo</p>
-            <h2>Relatorio por periodo</h2>
-          </div>
-          <span className={styles.badgeLight}>
-            {loadingReport ? "Calculando" : "Total e lista"}
-          </span>
-        </div>
-
-        {reportTotal === null && reportPayments.length === 0 ? (
-          <p className={styles.muted}>
-            Use os filtros e clique em "Gerar relatorio".
-          </p>
-        ) : (
-          <>
-            <div className={styles.reportSummary}>
-              <div className={styles.reportCard}>
-                <span className={styles.reportLabel}>Total no periodo</span>
-                <strong className={styles.reportValue}>
-                  {Number(reportTotal || 0).toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </strong>
-              </div>
-            </div>
-
-            {loadingReport ? (
-              <p className={styles.loading}>Gerando relatorio...</p>
-            ) : reportPayments.length === 0 ? (
-              <p className={styles.empty}>
-                Nenhum pagamento no periodo selecionado.
-              </p>
-            ) : (
-              <div className={styles.tableWrapper}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Tipo</th>
-                      <th>Descricao</th>
-                      <th>Valor</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reportPayments.map((p) => (
-                      <tr key={`report-${p.id}`}>
-                        <td>{formatDate(p.date)}</td>
-                        <td>
-                          {p.paymentType?.name ||
-                            paymentTypes.find((t) => t.id === p.paymentTypeId)
-                              ?.name ||
-                            "-"}
-                        </td>
-                        <td>{p.description}</td>
-                        <td>
-                          {Number(p.amount).toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        )}
-      </section>
-
-      {/* Tabela */}
-      <section className={styles.panel}>
-        <div className={styles.sectionHeader}>
-          <div>
-            <p className={styles.helperText}>Visão geral</p>
-            <h2>Pagamentos</h2>
-          </div>
-          <span className={styles.badgeLight}>
-            {loadingPayments ? "Atualizando" : "Dados listados"}
-          </span>
-        </div>
-
-        {loadingPayments ? (
-          <p className={styles.loading}>Carregando pagamentos...</p>
-        ) : payments.length === 0 ? (
-          <p className={styles.empty}>Nenhum pagamento encontrado.</p>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Descrição</th>
-                  <th>Valor</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id}>
-                    <td>{formatDate(p.date)}</td>
-                    <td>
-                      {p.paymentType?.name ||
-                        paymentTypes.find((t) => t.id === p.paymentTypeId)
-                          ?.name ||
-                        "-"}
-                    </td>
-                    <td>{p.description}</td>
-                    <td>
-                      {Number(p.amount).toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        {isAdmin && (
-                          <>
-                            <button
-                              onClick={() => handleEdit(p)}
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => handleDelete(p.id)}
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
-                            >
-                              Excluir
-                            </button>
-                            <label
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
-                            >
-                              {uploadingId === p.id
-                                ? "Enviando..."
-                                : p.receiptUrl
-                                ? "Alterar comprovante"
-                                : "Enviar comprovante"}
-                              <input
-                                type="file"
-                                accept="application/pdf,image/png,image/jpeg"
-                                className={styles.fileInput}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  handleUploadReceipt(p.id, file);
-                                  e.target.value = "";
-                                }}
-                                disabled={uploadingId === p.id || !isAdmin}
-                              />
-                            </label>
-                          </>
-                        )}
-                        {p.receiptUrl && (
-                          <>
-                            <a
-                              href={p.receiptUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className={`${styles.btn} ${styles.btnSmall} ${styles.btnGhost}`}
-                            >
-                              Ver comprovante
-                            </a>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleDeleteReceipt(p.id)}
-                                className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
-                                disabled={deletingReceiptId === p.id}
-                              >
-                                {deletingReceiptId === p.id
-                                  ? "Removendo..."
-                                  : "Remover comprovante"}
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {!isAdmin && !p.receiptUrl && (
-                          <span className={styles.muted}>Apenas admin altera</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <PaymentsTable
+        payments={payments}
+        paymentTypes={paymentTypes}
+        isAdmin={isAdmin}
+        loadingPayments={loadingPayments}
+        uploadingId={uploadingId}
+        deletingReceiptId={deletingReceiptId}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onUpload={handleUploadReceipt}
+        onDeleteReceipt={handleDeleteReceipt}
+      />
     </main>
   );
 }
