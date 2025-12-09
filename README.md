@@ -231,11 +231,24 @@ npm run user:create
 
 ## Testes rápidos de API (curl)
 
-- Criar tipo: `curl -X POST http://localhost:3333/payment-types -H "Content-Type: application/json" -d '{"name":"Combustivel"}'`
-- Criar pagamento: `curl -X POST http://localhost:3333/payments -H "Content-Type: application/json" -d '{"date":"2025-01-20","paymentTypeId":1,"description":"Pagamento","amount":150}'`
-- Enviar comprovante: `curl -X POST http://localhost:3333/payments/1/receipt -F "file=@/caminho/arquivo.pdf"`
-- Remover comprovante: `curl -X DELETE http://localhost:3333/payments/1/receipt`
-- Relatório: `curl "http://localhost:3333/payments/report?startDate=2025-01-01&endDate=2025-01-31"`
+- Login (gera cookie HttpOnly):  
+  `curl -i -c cookies.txt -X POST http://localhost:3333/auth/login -H "Content-Type: application/json" -d '{"email":"admin@email.com","password":"sua_senha"}'`
+
+- Como admin (CRUD completo usando cookie):  
+  - Criar tipo: `curl -b cookies.txt -X POST http://localhost:3333/payment-types -H "Content-Type: application/json" -d '{"name":"Combustivel"}'`
+  - Criar pagamento: `curl -b cookies.txt -X POST http://localhost:3333/payments -H "Content-Type: application/json" -d '{"date":"2025-01-20","paymentTypeId":1,"description":"Pagamento","amount":150}'`
+  - Editar pagamento: `curl -b cookies.txt -X PUT http://localhost:3333/payments/1 -H "Content-Type: application/json" -d '{"description":"Ajuste","amount":120}'`
+  - Deletar pagamento: `curl -b cookies.txt -X DELETE http://localhost:3333/payments/1`
+  - Upload de comprovante: `curl -b cookies.txt -X POST http://localhost:3333/payments/1/receipt -F "file=@/caminho/arquivo.pdf"`
+  - Remover comprovante: `curl -b cookies.txt -X DELETE http://localhost:3333/payments/1/receipt`
+
+- Como operador (somente leitura; escritas retornam 403):  
+  - Login operador: `curl -i -c cookies-op.txt -X POST http://localhost:3333/auth/login -H "Content-Type: application/json" -d '{"email":"operator@email.com","password":"senha"}'`
+  - Listar pagamentos: `curl -b cookies-op.txt "http://localhost:3333/payments?startDate=2025-01-01&endDate=2025-01-31"`
+  - Tentar criar (esperado 403): `curl -b cookies-op.txt -X POST http://localhost:3333/payments -H "Content-Type: application/json" -d '{"date":"2025-01-20","paymentTypeId":1,"description":"Pago","amount":10}'`
+
+- Relatório (qualquer autenticado):  
+  `curl -b cookies.txt "http://localhost:3333/payments/report?startDate=2025-01-01&endDate=2025-01-31"`
 
 ---
 
