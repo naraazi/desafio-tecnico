@@ -6,10 +6,14 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from "typeorm";
 import { PaymentType } from "./PaymentType";
 
 @Entity("payments")
+@Index("IDX_payment_unique", ["date", "paymentTypeId", "description", "amount"], {
+  unique: true,
+})
 export class Payment {
   @PrimaryGeneratedColumn()
   id!: number;
