@@ -24,7 +24,7 @@ async function verifyToken(token: string): Promise<boolean> {
   }
 }
 
-export async function proxy(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   const isPublic = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
@@ -50,7 +50,7 @@ export async function proxy(req: NextRequest) {
 
   return NextResponse.next();
 }
-
+ 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
