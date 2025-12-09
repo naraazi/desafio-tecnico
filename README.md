@@ -254,8 +254,13 @@ npm run user:create
 
 ## Testes automatizados
 
-- Unitários com Vitest cobrindo regras de pagamento e tipos (`src/services/__tests__`), mockando repositórios e S3. Não dependem de MySQL nem de credenciais AWS.
-- Rodar localmente no backend: `npm test`. (Os testes não estão configurados para rodar via container ou E2E.)
+- Unitários com Vitest (apenas backend). Não dependem de MySQL nem de credenciais AWS; repositórios, S3, JWT e req/res são mockados.
+- Cobertura:
+  - `src/services/__tests__/PaymentService.spec.ts`: normalização de dados, bloqueio de duplicados, checagem de FK, totalização de relatórios e remoção de comprovante/S3.
+  - `src/services/__tests__/PaymentTypeService.spec.ts`: criação/edição/deleção de tipos com validação de duplicidade e bloqueio quando o tipo está em uso.
+  - `src/services/__tests__/AuthService.spec.ts`: login com credenciais válidas, erro de credenciais, erro quando `JWT_SECRET` ausente, criação de usuário e sanitização (passwordHash não vaza).
+  - `src/middlewares/__tests__/auth.spec.ts`: `requireAuth` (cookie/Bearer, token inválido/ausente) e `requireRole` (RBAC admin/operator).
+- Como rodar: no diretório `backend`, execute `npm run test`. A saída não deve conectar a banco nem AWS; tudo é mockado.
 
 ---
 
