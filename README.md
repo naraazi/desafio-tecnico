@@ -101,8 +101,9 @@ Frontend (`frontend/.env`):
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3333
 NEXT_PUBLIC_AUTH_COOKIE_NAME=auth_token
-JWT_SECRET=mesma_chave_jwt_do_backend
 ```
+
+> O frontend apenas verifica se o cookie de sessao existe para redirecionar; a validacao real do token e feita pelo backend. Nao e necessario expor `JWT_SECRET` no frontend.
 
 ```
 cd frontend
