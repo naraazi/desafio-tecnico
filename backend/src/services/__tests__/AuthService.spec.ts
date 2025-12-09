@@ -36,6 +36,8 @@ describe("AuthService", () => {
       email: "admin@email.com",
       passwordHash: await (await import("bcryptjs")).hash("secret", 10),
       role: "admin",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-02T00:00:00Z"),
     } satisfies User);
 
     const result = await service.login("admin@email.com", "secret");
@@ -83,6 +85,8 @@ describe("AuthService", () => {
       email: "admin@email.com",
       passwordHash: await (await import("bcryptjs")).hash("secret", 10),
       role: "admin",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-02T00:00:00Z"),
     } satisfies User);
 
     await expect(
@@ -124,6 +128,8 @@ describe("AuthService", () => {
       email: "exists@email.com",
       passwordHash: "hash",
       role: "admin",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-02T00:00:00Z"),
     } satisfies User);
 
     await expect(
@@ -143,6 +149,8 @@ describe("AuthService", () => {
       email: "u@email.com",
       passwordHash: "hash",
       role: "operator",
+      createdAt: new Date("2024-01-01T00:00:00Z"),
+      updatedAt: new Date("2024-01-02T00:00:00Z"),
     } satisfies User);
 
     const user = await service.getProfile(2);
@@ -152,8 +160,8 @@ describe("AuthService", () => {
       name: "User",
       email: "u@email.com",
       role: "operator",
-      createdAt: undefined,
-      updatedAt: undefined,
+      createdAt: expect.any(Date),
+      updatedAt: expect.any(Date),
     });
     expect((user as any).passwordHash).toBeUndefined();
   });
