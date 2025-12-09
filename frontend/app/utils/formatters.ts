@@ -51,7 +51,7 @@ export function parseCurrency(value: string): number {
 }
 
 export function formatCurrencyFromNumber(value: number): string {
-  if (typeof value !== "number") return "";
+  if (typeof value !== "number" || !Number.isFinite(value)) return "";
   return value.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
