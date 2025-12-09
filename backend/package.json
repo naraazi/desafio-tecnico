@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest watch",
     "user:create": "ts-node-dev --transpile-only src/scripts/createUser.ts",
-    "user:delete": "ts-node-dev --transpile-only src/scripts/deleteUser.ts"
+    "user:delete": "ts-node-dev --transpile-only src/scripts/deleteUser.ts",
+    "user:update": "ts-node-dev --transpile-only src/scripts/updateUser.ts",
+    "user:list": "ts-node-dev --transpile-only src/scripts/listUsers.ts"
   },
   "keywords": [],
   "author": "",
