@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type React from "react";
 import type {
   Payment,
@@ -599,6 +600,11 @@ export default function PaymentsPage() {
       <main className={styles.page}>
         <div className={styles.errorBanner}>
           Sessao expirada ou usuario nao encontrado. Faca login novamente.
+        </div>
+        <div className={styles.actions}>
+          <Link href="/login" className={`${styles.btn} ${styles.btnPrimary}`}>
+            Ir para login
+          </Link>
         </div>
       </main>
     );
