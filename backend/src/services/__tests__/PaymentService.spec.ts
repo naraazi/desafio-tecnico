@@ -81,6 +81,49 @@ describe("PaymentService", () => {
     });
   });
 
+  it("aceita transactionType transfer e usa no filtro de duplicidade", async () => {
+    paymentTypeRepo.findOne.mockResolvedValue({ id: 1, name: "Tipo" });
+    paymentRepo.findOne.mockResolvedValue(null);
+    paymentRepo.create.mockImplementation((data) => data);
+    paymentRepo.save.mockImplementation(async (data) => ({
+      ...data,
+      id: 2,
+    }));
+
+    const payment = await service.create({
+      date: "2025-01-21",
+      paymentTypeId: 1,
+      description: "Transferencia entre contas",
+      amount: 200,
+      transactionType: "transfer",
+    });
+
+    expect(paymentRepo.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ transactionType: "transfer" }),
+      })
+    );
+    expect(paymentRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ transactionType: "transfer" })
+    );
+    expect(payment.transactionType).toBe("transfer");
+  });
+
+  it("rejeita transactionType invalido", async () => {
+    paymentTypeRepo.findOne.mockResolvedValue({ id: 1, name: "Tipo" });
+    paymentRepo.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.create({
+        date: "2025-01-22",
+        paymentTypeId: 1,
+        description: "Teste",
+        amount: 50,
+        transactionType: "bonus" as any,
+      })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
   it("lanca erro 404 se tipo de pagamento nao existe", async () => {
     paymentTypeRepo.findOne.mockResolvedValue(null);
 
@@ -157,6 +200,28 @@ describe("PaymentService", () => {
         amount: 20.57,
         paymentTypeId: 2,
       })
+    );
+  });
+
+  it("permite atualizar transactionType", async () => {
+    paymentRepo.findOne
+      .mockResolvedValueOnce({
+        id: 1,
+        date: "2025-02-01",
+        paymentTypeId: 1,
+        description: "Item",
+        amount: 30,
+        transactionType: "payment",
+      })
+      .mockResolvedValueOnce(null);
+    paymentTypeRepo.findOne.mockResolvedValue({ id: 1 });
+    paymentRepo.save.mockImplementation(async (data) => data);
+
+    const updated = await service.update(1, { transactionType: "transfer" });
+
+    expect(updated.transactionType).toBe("transfer");
+    expect(paymentRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ transactionType: "transfer" })
     );
   });
 
