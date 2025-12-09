@@ -20,8 +20,13 @@ function ask(question: string, options?: { silent?: boolean }): Promise<string> 
         resolve(answer);
       });
 
-      (rl as any)._writeToOutput = function _writeToOutput() {
-        rl.output.write("*");
+      const rlWithOutput = rl as readline.Interface & {
+        output: NodeJS.WritableStream;
+        _writeToOutput?: (chunk: string) => void;
+      };
+
+      rlWithOutput._writeToOutput = function _writeToOutput() {
+        rlWithOutput.output.write("*");
       };
     } else {
       rl.question(question, (answer) => {

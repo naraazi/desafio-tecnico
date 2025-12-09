@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { Secret, SignOptions, JwtPayload } from "jsonwebtoken";
 import { getUserRepository } from "../repositories/UserRepository";
 import { AppError } from "../errors/AppError";
 import {
@@ -29,11 +29,12 @@ export class AuthService {
       throw new AppError("JWT_SECRET nao configurado.", 500);
     }
 
-    return jwt.sign(
-      { sub: user.id, role: user.role, email: user.email },
-      jwtSecret,
-      { expiresIn: jwtExpiresIn }
-    );
+    const secretKey: Secret = jwtSecret;
+    const options: SignOptions = { expiresIn: jwtExpiresIn as SignOptions["expiresIn"] };
+
+    const payload = { sub: String(user.id), role: user.role, email: user.email };
+
+    return jwt.sign(payload, secretKey, options);
   }
 
   async login(email: string, password: string): Promise<{
