@@ -4,9 +4,11 @@ import type { PaymentType } from "../../types/payment";
 interface FiltersPanelProps {
   paymentTypes: PaymentType[];
   filterTypeId: string;
+  filterTransactionType: string;
   filterStartDate: string;
   filterEndDate: string;
   onTypeChange: (value: string) => void;
+  onTransactionTypeChange: (value: string) => void;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
   onApply: (e: React.FormEvent) => void;
@@ -16,9 +18,11 @@ interface FiltersPanelProps {
 export function FiltersPanel({
   paymentTypes,
   filterTypeId,
+  filterTransactionType,
   filterStartDate,
   filterEndDate,
   onTypeChange,
+  onTransactionTypeChange,
   onStartDateChange,
   onEndDateChange,
   onApply,
@@ -33,7 +37,20 @@ export function FiltersPanel({
         </div>
         <span className={styles.badgeLight}>Busca refinada</span>
       </div>
-      <form onSubmit={onApply} className={styles.formGrid}>
+      <form onSubmit={onApply} className={`${styles.formGrid} ${styles.filters}`}>
+        <div className={styles.field}>
+          <label className={styles.label}>Tipo de lancamento</label>
+          <select
+            className={styles.input}
+            value={filterTransactionType}
+            onChange={(e) => onTransactionTypeChange(e.target.value)}
+          >
+            <option value="">Pagamentos e transferencias</option>
+            <option value="payment">Apenas pagamentos</option>
+            <option value="transfer">Apenas transferencias</option>
+          </select>
+        </div>
+
         <div className={styles.field}>
           <label className={styles.label}>Tipo de pagamento</label>
           <select

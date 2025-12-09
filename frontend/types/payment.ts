@@ -10,11 +10,12 @@ export interface Payment {
   paymentTypeId: number;
   description: string;
   amount: number;
+  transactionType: "payment" | "transfer";
   paymentType?: PaymentType;
   createdAt?: string;
   updatedAt?: string;
-   receiptPath?: string;
-   receiptUrl?: string;
+  receiptPath?: string;
+  receiptUrl?: string;
 }
 
 export interface PaymentReportResponse {

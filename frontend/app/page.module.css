@@ -323,18 +323,21 @@
 
 .filters {
   margin-top: 6px;
-  grid-template-columns: repeat(3, minmax(140px, 1fr)) auto;
-  column-gap: 8px;
-  row-gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  column-gap: 10px;
+  row-gap: 10px;
   align-items: flex-end;
 }
 
-.filters .field {
-  max-width: 180px;
+.filters .actionsInline,
+.filters .actions {
+  justify-self: flex-start;
 }
 
-.filters .actionsInline {
-  justify-self: flex-start;
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .tableWrapper {

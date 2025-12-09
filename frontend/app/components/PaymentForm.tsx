@@ -3,6 +3,8 @@ import styles from "../page.module.css";
 import type { PaymentType } from "../../types/payment";
 
 interface PaymentFormProps {
+  title: string;
+  transactionType: "payment" | "transfer";
   isAdmin: boolean;
   paymentTypes: PaymentType[];
   editingId: number | null;
@@ -16,9 +18,12 @@ interface PaymentFormProps {
   onAmountChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
+  accent?: boolean;
 }
 
 export function PaymentForm({
+  title,
+  transactionType,
   isAdmin,
   paymentTypes,
   editingId,
@@ -32,18 +37,34 @@ export function PaymentForm({
   onAmountChange,
   onSubmit,
   onCancel,
+  accent = false,
 }: PaymentFormProps) {
+  const isTransfer = transactionType === "transfer";
+  const sectionTitle = editingId
+    ? `Editar ${isTransfer ? "transferencia" : "pagamento"}`
+    : title;
+
+  const submitLabel = editingId
+    ? "Salvar edicao"
+    : isTransfer
+    ? "Criar transferencia"
+    : "Criar pagamento";
+
   return (
-    <section className={`${styles.panel} ${styles.panelAccent}`}>
+    <section
+      className={`${styles.panel} ${accent ? styles.panelAccent : ""}`.trim()}
+    >
       <div className={styles.sectionHeader}>
         <div>
           <p className={styles.helperText}>Lancamentos</p>
-          <h2>{editingId ? "Editar pagamento" : "Novo pagamento"}</h2>
+          <h2>{sectionTitle}</h2>
         </div>
         <span className={styles.badgeLight}>
           {isAdmin
             ? editingId
               ? "Editando registro"
+              : isTransfer
+              ? "Nova transferencia"
               : "Cadastro rapido"
             : "Apenas admin altera"}
         </span>
@@ -51,7 +72,7 @@ export function PaymentForm({
 
       {!isAdmin && (
         <div className={styles.lockedMessage}>
-          Apenas administradores podem criar ou editar pagamentos.
+          Apenas administradores podem criar ou editar pagamentos ou transferencias.
         </div>
       )}
 
@@ -71,7 +92,7 @@ export function PaymentForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Tipo de pagamento</label>
+          <label className={styles.label}>Tipo de pagamento/transferencia</label>
           <select
             className={styles.input}
             value={formTypeId}
@@ -108,7 +129,7 @@ export function PaymentForm({
             disabled={!isAdmin}
             onChange={(e) => onAmountChange(e.target.value)}
             inputMode="decimal"
-            placeholder="0,00"
+            placeholder={isTransfer ? "0,00 (saida/entrada)" : "0,00"}
           />
         </div>
 
@@ -118,7 +139,7 @@ export function PaymentForm({
             className={`${styles.btn} ${styles.btnPrimary}`}
             disabled={!isAdmin}
           >
-            {editingId ? "Salvar edicao" : "Criar pagamento"}
+            {submitLabel}
           </button>
 
           {editingId && (

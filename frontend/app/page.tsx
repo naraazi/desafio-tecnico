@@ -24,6 +24,8 @@ import {
 } from "./utils/formatters";
 import styles from "./page.module.css";
 
+type TransactionKind = "payment" | "transfer";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function redirectToLogin() {
@@ -53,16 +55,29 @@ export default function PaymentsPage() {
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
+  const [filterTransactionType, setFilterTransactionType] = useState<string>("");
   const [filterStartDate, setFilterStartDate] = useState<string>("");
   const [filterEndDate, setFilterEndDate] = useState<string>("");
 
-  // form
-  const [formDate, setFormDate] = useState<string>("");
-  const [formTypeId, setFormTypeId] = useState<string>("");
-  const [formDescription, setFormDescription] = useState<string>("");
-  const [formAmount, setFormAmount] = useState<string>("");
+  // formularios de lancamentos
+  const emptyForm = {
+    date: "",
+    typeId: "",
+    description: "",
+    amount: "",
+  };
 
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formState, setFormState] = useState<
+    Record<TransactionKind, typeof emptyForm>
+  >({
+    payment: { ...emptyForm },
+    transfer: { ...emptyForm },
+  });
+
+  const [editing, setEditing] = useState<{
+    id: number;
+    kind: TransactionKind;
+  } | null>(null);
   const [paymentTypeEditingId, setPaymentTypeEditingId] = useState<
     number | null
   >(null);
@@ -154,6 +169,8 @@ export default function PaymentsPage() {
 
       const params = new URLSearchParams();
       if (filterTypeId) params.append("paymentTypeId", filterTypeId);
+      if (filterTransactionType)
+        params.append("transactionType", filterTransactionType);
       const startIso = displayToIso(filterStartDate);
       const endIso = displayToIso(filterEndDate);
       if (startIso) params.append("startDate", startIso);
@@ -183,12 +200,28 @@ export default function PaymentsPage() {
     }
   }
 
-  function resetForm() {
-    setFormDate("");
-    setFormTypeId("");
-    setFormDescription("");
-    setFormAmount("");
-    setEditingId(null);
+  function resetForm(kind: TransactionKind) {
+    setFormState((prev) => ({
+      ...prev,
+      [kind]: { ...emptyForm },
+    }));
+    if (editing?.kind === kind) {
+      setEditing(null);
+    }
+  }
+
+  function updateFormField(
+    kind: TransactionKind,
+    field: keyof typeof emptyForm,
+    value: string
+  ) {
+    setFormState((prev) => ({
+      ...prev,
+      [kind]: {
+        ...prev[kind],
+        [field]: value,
+      },
+    }));
   }
 
   function resetPaymentTypeForm() {
@@ -196,17 +229,18 @@ export default function PaymentsPage() {
     setPaymentTypeEditingId(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent, kind: TransactionKind) {
     e.preventDefault();
     if (!isAdmin) {
-      alert("Apenas administradores podem criar ou editar pagamentos.");
+      alert("Apenas administradores podem criar ou editar pagamentos/transferencias.");
       return;
     }
-    if (!formDate || !formTypeId || !formDescription || !formAmount) {
+    const { date, typeId, description, amount } = formState[kind];
+    if (!date || !typeId || !description || !amount) {
       alert("Preencha todos os campos");
       return;
     }
-    if (!displayToIso(formDate)) {
+    if (!displayToIso(date)) {
       alert("Data invalida. Use DD/MM/AAAA.");
       return;
     }
@@ -214,21 +248,22 @@ export default function PaymentsPage() {
     try {
       setError(null);
 
-      const amountValue = parseCurrency(formAmount);
+      const amountValue = parseCurrency(amount);
       if (Number.isNaN(amountValue)) {
         throw new Error("Valor invalido.");
       }
 
       const body = {
-        date: displayToIso(formDate) || "",
-        paymentTypeId: Number(formTypeId),
-        description: formDescription,
+        date: displayToIso(date) || "",
+        paymentTypeId: Number(typeId),
+        description,
         amount: amountValue,
+        transactionType: kind,
       };
 
-      const isEditing = editingId !== null;
+      const isEditing = editing?.kind === kind;
       const url = isEditing
-        ? `${API_URL}/payments/${editingId}`
+        ? `${API_URL}/payments/${editing?.id}`
         : `${API_URL}/payments`;
       const method = isEditing ? "PUT" : "POST";
 
@@ -251,15 +286,15 @@ export default function PaymentsPage() {
         throw new Error(
           data?.message ||
             (isEditing
-              ? "Erro ao atualizar pagamento"
-              : "Erro ao criar pagamento")
+              ? "Erro ao atualizar lancamento"
+              : "Erro ao criar lancamento")
         );
       }
 
       await fetchPayments();
-      resetForm();
+      resetForm(kind);
     } catch (err: any) {
-      alert(err.message || "Erro inesperado ao salvar pagamento");
+      alert(err.message || "Erro inesperado ao salvar lancamento");
     }
   }
 
@@ -354,16 +389,22 @@ export default function PaymentsPage() {
 
   function handleEdit(payment: Payment) {
     if (!isAdmin) return;
-    setEditingId(payment.id);
-    setFormDate(isoToDisplay(payment.date));
-    setFormTypeId(String(payment.paymentTypeId));
-    setFormDescription(payment.description);
-    setFormAmount(formatCurrencyFromNumber(Number(payment.amount)));
+    const kind: TransactionKind = payment.transactionType || "payment";
+    setEditing({ id: payment.id, kind });
+    setFormState((prev) => ({
+      ...prev,
+      [kind]: {
+        date: isoToDisplay(payment.date),
+        typeId: String(payment.paymentTypeId),
+        description: payment.description,
+        amount: formatCurrencyFromNumber(Number(payment.amount)),
+      },
+    }));
   }
 
   async function handleDelete(id: number) {
     if (!isAdmin) return;
-    if (!confirm("Tem certeza que deseja excluir este pagamento?")) return;
+    if (!confirm("Tem certeza que deseja excluir este lancamento?")) return;
 
     try {
       const res = await fetch(`${API_URL}/payments/${id}`, {
@@ -378,11 +419,11 @@ export default function PaymentsPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Erro ao excluir pagamento");
+        throw new Error(data?.message || "Erro ao excluir lancamento");
       }
       await fetchPayments();
     } catch (err: any) {
-      alert(err.message || "Erro inesperado ao excluir pagamento");
+      alert(err.message || "Erro inesperado ao excluir lancamento");
     }
   }
 
@@ -442,7 +483,7 @@ export default function PaymentsPage() {
 
   async function handleDeleteReceipt(paymentId: number) {
     if (!isAdmin) return;
-    if (!confirm("Remover comprovante deste pagamento?")) return;
+    if (!confirm("Remover comprovante deste lancamento?")) return;
     try {
       setDeletingReceiptId(paymentId);
       setError(null);
@@ -489,6 +530,8 @@ export default function PaymentsPage() {
 
       const params = new URLSearchParams();
       if (filterTypeId) params.append("paymentTypeId", filterTypeId);
+      if (filterTransactionType)
+        params.append("transactionType", filterTransactionType);
       const startIso = displayToIso(filterStartDate);
       const endIso = displayToIso(filterEndDate);
       if (startIso) params.append("startDate", startIso);
@@ -580,7 +623,7 @@ export default function PaymentsPage() {
             <span className={styles.heroStatValue}>{paymentTypes.length}</span>
           </div>
           <div className={styles.heroStat}>
-            <span className={styles.heroStatLabel}>Pagamentos listados</span>
+            <span className={styles.heroStatLabel}>Lancamentos listados</span>
             <span className={styles.heroStatValue}>{payments.length}</span>
           </div>
           <div className={styles.heroStat}>
@@ -591,8 +634,12 @@ export default function PaymentsPage() {
             </span>
             <span className={styles.heroStatValue}>
               {
-                [filterTypeId, filterStartDate, filterEndDate].filter(Boolean)
-                  .length
+                [
+                  filterTypeId,
+                  filterTransactionType,
+                  filterStartDate,
+                  filterEndDate,
+                ].filter(Boolean).length
               }
             </span>
           </div>
@@ -602,21 +649,58 @@ export default function PaymentsPage() {
       {error && <div className={styles.errorBanner}>{error}</div>}
 
       <section className={styles.split}>
-        <PaymentForm
-          isAdmin={isAdmin}
-          paymentTypes={paymentTypes}
-          editingId={editingId}
-          formDate={formDate}
-          formTypeId={formTypeId}
-          formDescription={formDescription}
-          formAmount={formAmount}
-          onDateChange={(value) => setFormDate(sanitizeDateInput(value))}
-          onTypeChange={(value) => setFormTypeId(value)}
-          onDescriptionChange={(value) => setFormDescription(value)}
-          onAmountChange={(value) => setFormAmount(formatCurrencyInput(value))}
-          onSubmit={handleSubmit}
-          onCancel={resetForm}
-        />
+        <div className={styles.stack}>
+          <PaymentForm
+            title="Novo pagamento"
+            transactionType="payment"
+            isAdmin={isAdmin}
+            paymentTypes={paymentTypes}
+            editingId={editing?.kind === "payment" ? editing.id : null}
+            formDate={formState.payment.date}
+            formTypeId={formState.payment.typeId}
+            formDescription={formState.payment.description}
+            formAmount={formState.payment.amount}
+            onDateChange={(value) =>
+              updateFormField("payment", "date", sanitizeDateInput(value))
+            }
+            onTypeChange={(value) => updateFormField("payment", "typeId", value)}
+            onDescriptionChange={(value) =>
+              updateFormField("payment", "description", value)
+            }
+            onAmountChange={(value) =>
+              updateFormField("payment", "amount", formatCurrencyInput(value))
+            }
+            onSubmit={(e) => handleSubmit(e, "payment")}
+            onCancel={() => resetForm("payment")}
+            accent
+          />
+
+          <PaymentForm
+            title="Nova transferencia"
+            transactionType="transfer"
+            isAdmin={isAdmin}
+            paymentTypes={paymentTypes}
+            editingId={editing?.kind === "transfer" ? editing.id : null}
+            formDate={formState.transfer.date}
+            formTypeId={formState.transfer.typeId}
+            formDescription={formState.transfer.description}
+            formAmount={formState.transfer.amount}
+            onDateChange={(value) =>
+              updateFormField("transfer", "date", sanitizeDateInput(value))
+            }
+            onTypeChange={(value) =>
+              updateFormField("transfer", "typeId", value)
+            }
+            onDescriptionChange={(value) =>
+              updateFormField("transfer", "description", value)
+            }
+            onAmountChange={(value) =>
+              updateFormField("transfer", "amount", formatCurrencyInput(value))
+            }
+            onSubmit={(e) => handleSubmit(e, "transfer")}
+            onCancel={() => resetForm("transfer")}
+          />
+        </div>
 
         <PaymentTypeManager
           isAdmin={isAdmin}
@@ -635,9 +719,11 @@ export default function PaymentsPage() {
       <FiltersPanel
         paymentTypes={paymentTypes}
         filterTypeId={filterTypeId}
+        filterTransactionType={filterTransactionType}
         filterStartDate={filterStartDate}
         filterEndDate={filterEndDate}
         onTypeChange={setFilterTypeId}
+        onTransactionTypeChange={setFilterTransactionType}
         onStartDateChange={(value) => setFilterStartDate(sanitizeDateInput(value))}
         onEndDateChange={(value) => setFilterEndDate(sanitizeDateInput(value))}
         onApply={handleApplyFilters}

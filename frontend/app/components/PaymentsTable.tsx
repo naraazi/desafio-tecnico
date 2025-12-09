@@ -33,11 +33,11 @@ export function PaymentsTable({
         <div className={styles.sectionHeader}>
           <div>
             <p className={styles.helperText}>Visao geral</p>
-            <h2>Pagamentos</h2>
+            <h2>Pagamentos e transferencias</h2>
           </div>
           <span className={styles.badgeLight}>Atualizando</span>
         </div>
-        <p className={styles.loading}>Carregando pagamentos...</p>
+        <p className={styles.loading}>Carregando lancamentos...</p>
       </section>
     );
   }
@@ -47,19 +47,20 @@ export function PaymentsTable({
       <div className={styles.sectionHeader}>
         <div>
           <p className={styles.helperText}>Visao geral</p>
-          <h2>Pagamentos</h2>
+          <h2>Pagamentos e transferencias</h2>
         </div>
         <span className={styles.badgeLight}>Dados listados</span>
       </div>
 
       {payments.length === 0 ? (
-        <p className={styles.empty}>Nenhum pagamento encontrado.</p>
+        <p className={styles.empty}>Nenhum lancamento encontrado.</p>
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
             <thead>
               <tr>
                 <th>Data</th>
+                <th>Natureza</th>
                 <th>Tipo</th>
                 <th>Descricao</th>
                 <th>Valor</th>
@@ -70,6 +71,13 @@ export function PaymentsTable({
               {payments.map((p) => (
                 <tr key={p.id}>
                   <td>{formatDate(p.date)}</td>
+                  <td>
+                    <span className={styles.status}>
+                      {p.transactionType === "transfer"
+                        ? "Transferencia"
+                        : "Pagamento"}
+                    </span>
+                  </td>
                   <td>
                     {p.paymentType?.name ||
                       paymentTypes.find((t) => t.id === p.paymentTypeId)?.name ||

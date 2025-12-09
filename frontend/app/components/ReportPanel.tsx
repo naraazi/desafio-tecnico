@@ -49,7 +49,7 @@ export function ReportPanel({
             <p className={styles.loading}>Gerando relatorio...</p>
           ) : reportPayments.length === 0 ? (
             <p className={styles.empty}>
-              Nenhum pagamento no periodo selecionado.
+              Nenhum lancamento no periodo selecionado.
             </p>
           ) : (
             <div className={styles.tableWrapper}>
@@ -57,6 +57,7 @@ export function ReportPanel({
                 <thead>
                   <tr>
                     <th>Data</th>
+                    <th>Natureza</th>
                     <th>Tipo</th>
                     <th>Descricao</th>
                     <th>Valor</th>
@@ -66,6 +67,13 @@ export function ReportPanel({
                   {reportPayments.map((p) => (
                     <tr key={`report-${p.id}`}>
                       <td>{formatDate(p.date)}</td>
+                      <td>
+                        <span className={styles.status}>
+                          {p.transactionType === "transfer"
+                            ? "Transferencia"
+                            : "Pagamento"}
+                        </span>
+                      </td>
                       <td>
                         {p.paymentType?.name ||
                           paymentTypes.find((t) => t.id === p.paymentTypeId)
