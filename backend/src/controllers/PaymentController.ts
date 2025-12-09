@@ -53,7 +53,7 @@ export class PaymentController {
       const id = Number(req.params.id);
       const payment = await paymentService.findById(id);
       if (!payment) {
-        throw new AppError("Pagamento nao encontrado.", 404);
+        throw new AppError("Lancamento nao encontrado.", 404);
       }
       return res.json(payment);
     } catch (err) {

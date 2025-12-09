@@ -70,12 +70,14 @@ describe("PaymentService", () => {
       date: "2025-01-20",
       description: "Folha Janeiro",
       paymentTypeId: 1,
+      transactionType: "payment",
     });
     expect(payment).toMatchObject({
       id: 1,
       amount: 150.99,
       date: "2025-01-20",
       description: "Folha Janeiro",
+      transactionType: "payment",
     });
   });
 

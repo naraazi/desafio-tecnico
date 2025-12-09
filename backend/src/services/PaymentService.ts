@@ -6,7 +6,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import fileType from "file-type";
-import { Payment } from "../entities/Payment";
+import { Payment, TransactionType } from "../entities/Payment";
 import { getPaymentRepository } from "../repositories/PaymentRepository";
 import { getPaymentTypeRepository } from "../repositories/PaymentTypeRepository";
 import { AppError } from "../errors/AppError";
@@ -17,6 +17,7 @@ interface CreatePaymentDTO {
   paymentTypeId: number;
   description: string;
   amount: number;
+  transactionType?: TransactionType;
 }
 
 const ALLOWED_FILE_TYPES = [
@@ -36,6 +37,12 @@ export class PaymentService {
 
   private normalizeAmount(amount: number): number {
     return Number(amount.toFixed(2));
+  }
+
+  private normalizeTransactionType(type?: string): TransactionType {
+    if (!type) return "payment";
+    if (type === "payment" || type === "transfer") return type;
+    throw new AppError("Tipo de lancamento invalido. Use payment ou transfer.", 400);
   }
 
   private buildPublicUrl(key: string) {
@@ -80,6 +87,7 @@ export class PaymentService {
     paymentTypeId?: number;
     startDate?: string;
     endDate?: string;
+    transactionType?: TransactionType | string;
   }) {
     const paymentRepository = getPaymentRepository();
 
@@ -88,9 +96,13 @@ export class PaymentService {
       .leftJoinAndSelect("payment.paymentType", "paymentType")
       .orderBy("payment.date", "DESC");
 
-    if (filters?.paymentTypeId) {
+    const paymentTypeId =
+      typeof filters?.paymentTypeId !== "undefined"
+        ? Number(filters.paymentTypeId)
+        : undefined;
+    if (paymentTypeId) {
       query.andWhere("payment.paymentTypeId = :paymentTypeId", {
-        paymentTypeId: filters.paymentTypeId,
+        paymentTypeId,
       });
     }
 
@@ -103,6 +115,15 @@ export class PaymentService {
     if (filters?.endDate) {
       query.andWhere("payment.date <= :endDate", {
         endDate: this.normalizeDate(filters.endDate),
+      });
+    }
+
+    const transactionType = filters?.transactionType
+      ? this.normalizeTransactionType(String(filters.transactionType))
+      : undefined;
+    if (transactionType) {
+      query.andWhere("payment.transactionType = :transactionType", {
+        transactionType,
       });
     }
 
@@ -128,7 +149,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new AppError("Pagamento nao encontrado.", 404);
+      throw new AppError("Lancamento nao encontrado.", 404);
     }
 
     if (payment.receiptPath) {
@@ -146,6 +167,9 @@ export class PaymentService {
     const normalizedDescription = this.normalizeDescription(data.description);
     const normalizedAmount = this.normalizeAmount(data.amount);
     const { paymentTypeId } = data;
+    const normalizedTransactionType = this.normalizeTransactionType(
+      data.transactionType
+    );
 
     const paymentTypeExists = await paymentTypeRepository.findOne({
       where: { id: paymentTypeId },
@@ -160,12 +184,13 @@ export class PaymentService {
         paymentTypeId,
         description: normalizedDescription,
         amount: normalizedAmount,
+        transactionType: normalizedTransactionType,
       },
     });
 
     if (existing) {
       throw new AppError(
-        "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
+        "Ja existe um lancamento com mesma data, tipo, descricao e valor.",
         409
       );
     }
@@ -175,6 +200,7 @@ export class PaymentService {
       date: normalizedDate,
       description: normalizedDescription,
       amount: normalizedAmount,
+      transactionType: normalizedTransactionType,
     });
 
     return paymentRepository.save(payment);
@@ -187,6 +213,7 @@ export class PaymentService {
       paymentTypeId?: number;
       description?: string;
       amount?: number;
+      transactionType?: TransactionType;
     }
   ): Promise<Payment> {
     const paymentRepository = getPaymentRepository();
@@ -195,7 +222,7 @@ export class PaymentService {
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Pagamento nao encontrado.", 404);
+      throw new AppError("Lancamento nao encontrado.", 404);
     }
 
     const normalizedDate = data.date
@@ -203,11 +230,14 @@ export class PaymentService {
       : payment.date;
     const normalizedDescription = data.description
       ? this.normalizeDescription(data.description)
-      : payment.description;
+        : payment.description;
     const normalizedAmount =
       typeof data.amount === "number"
         ? this.normalizeAmount(data.amount)
         : payment.amount;
+    const normalizedTransactionType = data.transactionType
+      ? this.normalizeTransactionType(data.transactionType)
+      : payment.transactionType;
     const normalizedPaymentTypeId =
       typeof data.paymentTypeId === "number"
         ? data.paymentTypeId
@@ -229,12 +259,13 @@ export class PaymentService {
         paymentTypeId: normalizedPaymentTypeId,
         description: normalizedDescription,
         amount: normalizedAmount,
+        transactionType: normalizedTransactionType,
       },
     });
 
     if (duplicate) {
       throw new AppError(
-        "Ja existe um pagamento com mesma data, tipo, descricao e valor.",
+        "Ja existe um lancamento com mesma data, tipo, descricao e valor.",
         409
       );
     }
@@ -243,6 +274,7 @@ export class PaymentService {
     payment.paymentTypeId = normalizedPaymentTypeId;
     payment.description = normalizedDescription;
     payment.amount = normalizedAmount;
+    payment.transactionType = normalizedTransactionType;
 
     await paymentRepository.save(payment);
 
@@ -262,7 +294,7 @@ export class PaymentService {
 
     const payment = await paymentRepository.findOne({ where: { id } });
     if (!payment) {
-      throw new AppError("Pagamento nao encontrado.", 404);
+      throw new AppError("Lancamento nao encontrado.", 404);
     }
 
     // Remove comprovante anterior, se existir
@@ -319,7 +351,7 @@ export class PaymentService {
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Pagamento nao encontrado.", 404);
+      throw new AppError("Lancamento nao encontrado.", 404);
     }
 
     // remove comprovante associado, se houver
@@ -334,6 +366,7 @@ export class PaymentService {
     paymentTypeId?: number;
     startDate?: string;
     endDate?: string;
+    transactionType?: TransactionType | string;
   }): Promise<{ payments: Payment[]; total: number }> {
     const payments = await this.list(filters);
     const total = payments.reduce(
@@ -353,7 +386,7 @@ export class PaymentService {
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Pagamento nao encontrado.", 404);
+      throw new AppError("Lancamento nao encontrado.", 404);
     }
 
     if (!payment.receiptPath) {

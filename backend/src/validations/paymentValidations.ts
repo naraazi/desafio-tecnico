@@ -6,6 +6,9 @@ export const createPaymentValidation = celebrate({
     paymentTypeId: Joi.number().integer().required(),
     description: Joi.string().min(3).required(),
     amount: Joi.number().positive().required(),
+    transactionType: Joi.string()
+      .valid("payment", "transfer")
+      .default("payment"),
   }),
 });
 
@@ -15,7 +18,8 @@ export const updatePaymentValidation = celebrate({
     paymentTypeId: Joi.number().integer().optional(),
     description: Joi.string().min(3).optional(),
     amount: Joi.number().positive().optional(),
-  }).or("date", "paymentTypeId", "description", "amount"), // exige pelo menos um campo
+    transactionType: Joi.string().valid("payment", "transfer").optional(),
+  }).or("date", "paymentTypeId", "description", "amount", "transactionType"), // exige pelo menos um campo
 });
 
 export const paymentIdParamValidation = celebrate({
@@ -29,6 +33,7 @@ export const listPaymentsValidation = celebrate({
     paymentTypeId: Joi.number().integer().optional(),
     startDate: Joi.string().isoDate().optional(),
     endDate: Joi.string().isoDate().optional(),
+    transactionType: Joi.string().valid("payment", "transfer").optional(),
   }),
 });
 
@@ -37,5 +42,6 @@ export const reportPaymentsValidation = celebrate({
     paymentTypeId: Joi.number().integer().optional(),
     startDate: Joi.string().isoDate().optional(),
     endDate: Joi.string().isoDate().optional(),
+    transactionType: Joi.string().valid("payment", "transfer").optional(),
   }),
 });

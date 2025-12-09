@@ -10,10 +10,16 @@ import {
 } from "typeorm";
 import { PaymentType } from "./PaymentType";
 
+export type TransactionType = "payment" | "transfer";
+
 @Entity("payments")
-@Index("IDX_payment_unique", ["date", "paymentTypeId", "description", "amount"], {
-  unique: true,
-})
+@Index(
+  "IDX_payment_unique",
+  ["date", "paymentTypeId", "description", "amount", "transactionType"],
+  {
+    unique: true,
+  }
+)
 export class Payment {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -27,6 +33,13 @@ export class Payment {
   @ManyToOne(() => PaymentType)
   @JoinColumn({ name: "paymentTypeId" })
   paymentType!: PaymentType;
+
+  @Column({
+    type: "enum",
+    enum: ["payment", "transfer"],
+    default: "payment",
+  })
+  transactionType!: TransactionType;
 
   @Column()
   description!: string;
