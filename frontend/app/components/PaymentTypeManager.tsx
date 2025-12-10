@@ -1,4 +1,5 @@
 import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "../page.module.css";
 import type { PaymentType } from "../../types/payment";
 
@@ -27,12 +28,37 @@ export function PaymentTypeManager({
   onEdit,
   onDelete,
 }: PaymentTypeManagerProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pageSize, setPageSize] = useState(5);
+  const [page, setPage] = useState(1);
+
+  const filteredTypes = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return paymentTypes;
+    return paymentTypes.filter((type) =>
+      type.name.toLowerCase().includes(term)
+    );
+  }, [paymentTypes, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, pageSize, paymentTypes.length]);
+
+  const totalPages =
+    filteredTypes.length === 0 ? 1 : Math.max(1, Math.ceil(filteredTypes.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  const currentTypes = filteredTypes.slice(startIndex, startIndex + pageSize);
+
   return (
     <section className={styles.panel}>
       <div className={styles.sectionHeader}>
         <div>
           <p className={styles.helperText}>Tipos de pagamento</p>
           <h2>Gerenciar tipos</h2>
+          <p className={styles.muted}>
+            {filteredTypes.length} tipo(s) encontrado(s)
+          </p>
         </div>
         <span className={styles.badgeLight}>Auxiliar</span>
       </div>
@@ -79,9 +105,36 @@ export function PaymentTypeManager({
         </div>
       </form>
 
+      <div className={styles.filters}>
+        <div className={styles.field}>
+          <label className={styles.label}>Buscar tipos</label>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder="Ex: Pix, Combustivel..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Itens por pagina</label>
+          <select
+            className={styles.input}
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {loadingPaymentTypes ? (
         <p className={styles.loading}>Carregando tipos...</p>
-      ) : paymentTypes.length === 0 ? (
+      ) : filteredTypes.length === 0 ? (
         <p className={styles.empty}>Nenhum tipo cadastrado.</p>
       ) : (
         <div className={styles.tableWrapper}>
@@ -93,7 +146,7 @@ export function PaymentTypeManager({
               </tr>
             </thead>
             <tbody>
-              {paymentTypes.map((type) => (
+              {currentTypes.map((type) => (
                 <tr key={type.id}>
                   <td>
                     {type.name}
@@ -140,6 +193,30 @@ export function PaymentTypeManager({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {filteredTypes.length > 0 && (
+        <div className={styles.tableControls}>
+          <div className={styles.pagination}>
+            <button
+              className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Anterior
+            </button>
+            <span className={styles.paginationInfo}>
+              Pag. {currentPage} / {totalPages}
+            </span>
+            <button
+              className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Proxima
+            </button>
+          </div>
         </div>
       )}
     </section>

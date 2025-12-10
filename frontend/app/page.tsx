@@ -34,7 +34,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const NAV_ITEMS: { id: SectionKey; label: string }[] = [
   { id: "home", label: "Home" },
   { id: "lancamentos", label: "Lancamentos" },
-  { id: "tipos", label: "Tipos de pagamento" },
+  { id: "tipos", label: "Tipos" },
   { id: "relatorio", label: "Gerar relatorio" },
 ];
 
@@ -714,9 +714,7 @@ export default function PaymentsPage() {
       ? "Transferencias"
       : "Pagamentos e transferencias";
   const recentPayments = [...payments]
-    .sort(
-      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 3);
 
   return (
@@ -903,11 +901,11 @@ export default function PaymentsPage() {
               <ul className={styles.historyList}>
                 {recentPayments.map((p) => (
                   <li key={p.id} className={styles.historyItem}>
-                  <div className={styles.historyMain}>
-                    <div className={styles.historyTitle}>
-                      <span className={styles.historyDate}>
-                        {isoToDisplay(p.date)}
-                      </span>
+                    <div className={styles.historyMain}>
+                      <div className={styles.historyTitle}>
+                        <span className={styles.historyDate}>
+                          {isoToDisplay(p.date)}
+                        </span>
                         <span className={styles.status}>
                           {p.transactionType === "transfer"
                             ? "Transferencia"
