@@ -34,6 +34,18 @@ export const listPaymentsValidation = celebrate({
     startDate: Joi.string().isoDate().optional(),
     endDate: Joi.string().isoDate().optional(),
     transactionType: Joi.string().valid("payment", "transfer").optional(),
+    search: Joi.alternatives()
+      .try(
+        Joi.string().trim().max(80),
+        Joi.array().items(Joi.string().trim().max(80))
+      )
+      .optional(),
+    page: Joi.number().integer().positive().default(1),
+    pageSize: Joi.number().integer().positive().max(100).default(10),
+    sortBy: Joi.string()
+      .valid("date", "amount", "description", "paymentType", "transactionType", "createdAt")
+      .default("date"),
+    sortOrder: Joi.string().valid("asc", "desc", "ASC", "DESC").default("DESC"),
   }),
 });
 
@@ -43,5 +55,11 @@ export const reportPaymentsValidation = celebrate({
     startDate: Joi.string().isoDate().optional(),
     endDate: Joi.string().isoDate().optional(),
     transactionType: Joi.string().valid("payment", "transfer").optional(),
+    search: Joi.alternatives()
+      .try(
+        Joi.string().trim().max(80),
+        Joi.array().items(Joi.string().trim().max(80))
+      )
+      .optional(),
   }),
 });

@@ -26,6 +26,44 @@ const ALLOWED_FILE_TYPES = [
   { mime: "image/jpeg", ext: "jpg" },
 ];
 
+type PaymentSortField =
+  | "date"
+  | "amount"
+  | "description"
+  | "paymentType"
+  | "transactionType"
+  | "createdAt";
+
+interface ListPaymentsFilters {
+  paymentTypeId?: number;
+  startDate?: string;
+  endDate?: string;
+  transactionType?: TransactionType | string;
+  page?: number | string;
+  pageSize?: number | string;
+  sortBy?: PaymentSortField | string;
+  sortOrder?: "ASC" | "DESC" | string;
+  search?: string | string[];
+}
+
+interface PaymentListResponse {
+  payments: Payment[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  totals: {
+    pageAmount: number;
+    overallAmount: number;
+  };
+  sort: {
+    sortBy: PaymentSortField;
+    sortOrder: "ASC" | "DESC";
+  };
+}
+
 export class PaymentService {
   private normalizeDate(date: string): string {
     return date.substring(0, 10);
@@ -83,18 +121,12 @@ export class PaymentService {
     }
   }
 
-  async list(filters?: {
-    paymentTypeId?: number;
-    startDate?: string;
-    endDate?: string;
-    transactionType?: TransactionType | string;
-  }) {
+  private buildBaseQuery(filters?: ListPaymentsFilters) {
     const paymentRepository = getPaymentRepository();
 
     const query = paymentRepository
       .createQueryBuilder("payment")
-      .leftJoinAndSelect("payment.paymentType", "paymentType")
-      .orderBy("payment.date", "DESC");
+      .leftJoinAndSelect("payment.paymentType", "paymentType");
 
     const paymentTypeId =
       typeof filters?.paymentTypeId !== "undefined"
@@ -127,8 +159,60 @@ export class PaymentService {
       });
     }
 
-    const payments = await query.getMany();
+    const rawSearch = filters?.search;
+    const searchTerm = Array.isArray(rawSearch)
+      ? rawSearch.find((v) => !!v?.toString().trim())
+      : rawSearch;
+    const normalizedSearch = searchTerm?.toString().trim();
 
+    if (normalizedSearch) {
+      query.andWhere(
+        "(LOWER(payment.description) LIKE :search OR LOWER(paymentType.name) LIKE :search)",
+        {
+          search: `%${normalizedSearch.toLowerCase()}%`,
+        }
+      );
+    }
+
+    return query;
+  }
+
+  private resolveSort(sortBy?: string, sortOrder?: string): {
+    sortBy: PaymentSortField;
+    sortOrder: "ASC" | "DESC";
+    column: string;
+    secondary?: { column: string; order: "ASC" | "DESC" };
+  } {
+    const sortMap: Record<PaymentSortField, string> = {
+      date: "payment.date",
+      amount: "payment.amount",
+      description: "payment.description",
+      paymentType: "paymentType.name",
+      transactionType: "payment.transactionType",
+      createdAt: "payment.createdAt",
+    };
+
+    const normalizedSortBy = (Object.keys(sortMap) as PaymentSortField[]).includes(
+      sortBy as PaymentSortField
+    )
+      ? (sortBy as PaymentSortField)
+      : "date";
+
+    const normalizedSortOrder =
+      sortOrder?.toString().toUpperCase() === "ASC" ? "ASC" : "DESC";
+
+    return {
+      sortBy: normalizedSortBy,
+      sortOrder: normalizedSortOrder,
+      column: sortMap[normalizedSortBy],
+      secondary:
+        normalizedSortBy === "date"
+          ? { column: "payment.id", order: "DESC" }
+          : { column: "payment.date", order: "DESC" },
+    };
+  }
+
+  private async attachReceiptUrls(payments: Payment[]) {
     await Promise.all(
       payments.map(async (payment) => {
         if (payment.receiptPath) {
@@ -136,8 +220,65 @@ export class PaymentService {
         }
       })
     );
+  }
 
-    return payments;
+  async list(filters?: ListPaymentsFilters): Promise<PaymentListResponse> {
+    const baseQuery = this.buildBaseQuery(filters);
+    const totalsQuery = baseQuery.clone();
+
+    const totalsRow = await totalsQuery
+      .select("COUNT(*)", "count")
+      .addSelect("COALESCE(SUM(payment.amount), 0)", "amount")
+      .getRawOne<{ count: string; amount: string }>();
+
+    const totalItems = totalsRow ? Number(totalsRow.count) : 0;
+    const overallAmount = this.normalizeAmount(
+      Number(totalsRow?.amount ?? 0)
+    );
+
+    const requestedPage = Math.max(1, Number(filters?.page) || 1);
+    const pageSize = Math.max(
+      1,
+      Math.min(100, Number(filters?.pageSize) || 10)
+    );
+    const totalPages =
+      totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
+    const page =
+      totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+
+    const sort = this.resolveSort(filters?.sortBy as string, filters?.sortOrder as string);
+    baseQuery.orderBy(sort.column, sort.sortOrder);
+    if (sort.secondary) {
+      baseQuery.addOrderBy(sort.secondary.column, sort.secondary.order);
+    }
+    baseQuery.addOrderBy("payment.id", "DESC");
+
+    baseQuery.skip((page - 1) * pageSize).take(pageSize);
+
+    const payments = await baseQuery.getMany();
+    await this.attachReceiptUrls(payments);
+
+    const pageAmount = this.normalizeAmount(
+      payments.reduce((acc, payment) => acc + Number(payment.amount), 0)
+    );
+
+    return {
+      payments,
+      pagination: {
+        page,
+        pageSize,
+        totalItems,
+        totalPages,
+      },
+      totals: {
+        pageAmount,
+        overallAmount,
+      },
+      sort: {
+        sortBy: sort.sortBy,
+        sortOrder: sort.sortOrder,
+      },
+    };
   }
 
   async findById(id: number) {
@@ -368,10 +509,14 @@ export class PaymentService {
     endDate?: string;
     transactionType?: TransactionType | string;
   }): Promise<{ payments: Payment[]; total: number }> {
-    const payments = await this.list(filters);
-    const total = payments.reduce(
-      (acc, payment) => acc + Number(payment.amount),
-      0
+    const query = this.buildBaseQuery(filters);
+    query.orderBy("payment.date", "DESC");
+
+    const payments = await query.getMany();
+    await this.attachReceiptUrls(payments);
+
+    const total = this.normalizeAmount(
+      payments.reduce((acc, payment) => acc + Number(payment.amount), 0)
     );
 
     return { payments, total };
