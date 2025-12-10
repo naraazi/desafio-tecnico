@@ -14,7 +14,7 @@ interface FiltersPanelProps {
   onEndDateChange: (value: string) => void;
   onSearchChange: (value: string) => void;
   onApply: (e: React.FormEvent) => void;
-  onReport: (e?: React.FormEvent) => void;
+  onReport?: (e?: React.FormEvent) => void;
 }
 
 export function FiltersPanel({
@@ -32,6 +32,13 @@ export function FiltersPanel({
   onApply,
   onReport,
 }: FiltersPanelProps) {
+  function handleSubmit(e: React.FormEvent) {
+    onApply(e);
+    if (onReport) {
+      onReport();
+    }
+  }
+
   return (
     <section className={styles.panel}>
       <div className={styles.sectionHeader}>
@@ -41,7 +48,7 @@ export function FiltersPanel({
         </div>
         <span className={styles.badgeLight}>Busca refinada</span>
       </div>
-      <form onSubmit={onApply} className={`${styles.formGrid} ${styles.filters}`}>
+      <form onSubmit={handleSubmit} className={`${styles.formGrid} ${styles.filters}`}>
         <div className={styles.field}>
           <label className={styles.label}>Buscar</label>
           <input
@@ -114,13 +121,6 @@ export function FiltersPanel({
             className={`${styles.btn} ${styles.btnPrimary}`}
           >
             Aplicar
-          </button>
-          <button
-            type="button"
-            onClick={() => onReport()}
-            className={`${styles.btn} ${styles.btnSecondary}`}
-          >
-            Gerar relatorio
           </button>
         </div>
       </form>

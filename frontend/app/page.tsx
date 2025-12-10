@@ -10,7 +10,7 @@ import type {
   PaymentType,
 } from "../types/payment";
 import type { User } from "../types/user";
-import { SessionTopbar } from "./components/SessionTopbar";
+import { SessionTopbar, type NavKey } from "./components/SessionTopbar";
 import { PaymentForm } from "./components/PaymentForm";
 import { PaymentTypeManager } from "./components/PaymentTypeManager";
 import { FiltersPanel } from "./components/FiltersPanel";
@@ -28,8 +28,15 @@ import styles from "./page.module.css";
 
 type TransactionKind = "payment" | "transfer";
 type SortOrder = "asc" | "desc";
+type SectionKey = NavKey;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const NAV_ITEMS: { id: SectionKey; label: string }[] = [
+  { id: "home", label: "Home" },
+  { id: "lancamentos", label: "Lancamentos" },
+  { id: "tipos", label: "Tipos de pagamento" },
+  { id: "relatorio", label: "Gerar relatorio" },
+];
 
 function redirectToLogin() {
   if (typeof window !== "undefined") {
@@ -45,6 +52,7 @@ export default function PaymentsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [activeSection, setActiveSection] = useState<SectionKey>("home");
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [pagination, setPagination] = useState({
@@ -68,7 +76,8 @@ export default function PaymentsPage() {
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
-  const [filterTransactionType, setFilterTransactionType] = useState<string>("");
+  const [filterTransactionType, setFilterTransactionType] =
+    useState<string>("");
   const [filterStartDate, setFilterStartDate] = useState<string>("");
   const [filterEndDate, setFilterEndDate] = useState<string>("");
 
@@ -268,7 +277,9 @@ export default function PaymentsPage() {
   async function handleSubmit(e: React.FormEvent, kind: TransactionKind) {
     e.preventDefault();
     if (!isAdmin) {
-      alert("Apenas administradores podem criar ou editar pagamentos/transferencias.");
+      alert(
+        "Apenas administradores podem criar ou editar pagamentos/transferencias."
+      );
       return;
     }
     const { date, typeId, description, amount } = formState[kind];
@@ -668,164 +679,310 @@ export default function PaymentsPage() {
     );
   }
 
+  const activeFiltersCount = [
+    filterTypeId,
+    filterTransactionType,
+    filterStartDate,
+    filterEndDate,
+    searchTerm,
+  ].filter(Boolean).length;
+
+  const filterTypeLabel =
+    paymentTypes.find((type) => String(type.id) === filterTypeId)?.name ||
+    "Todos os tipos";
+
+  const transactionLabel =
+    filterTransactionType === "payment"
+      ? "Pagamentos"
+      : filterTransactionType === "transfer"
+      ? "Transferencias"
+      : "Pagamentos e transferencias";
+
   return (
     <main className={styles.page}>
-      <SessionTopbar user={user} onLogout={handleLogout} loggingOut={loggingOut} />
-
-      <section className={styles.hero}>
-        <div className={styles.heroText}>
-          <p className={styles.kicker}>Financeiro</p>
-          <h1 className={styles.heroTitle}>
-            Controle de pagamentos e transferencias
-          </h1>
-          <p className={styles.heroSubtitle}>
-            Cartorio 1o Oficio de Notas e Registros de Imoveis de Santarem - PA
-          </p>
-        </div>
-        <div className={styles.heroCard}>
-          <div className={styles.heroStat}>
-            <span className={styles.heroStatLabel}>Tipos cadastrados</span>
-            <span className={styles.heroStatValue}>{paymentTypes.length}</span>
-          </div>
-          <div className={styles.heroStat}>
-            <span className={styles.heroStatLabel}>Lancamentos listados</span>
-            <span className={styles.heroStatValue}>
-              {pagination.totalItems || payments.length}
-            </span>
-          </div>
-          <div className={styles.heroStat}>
-            <span className={styles.heroStatLabel}>
-              Filtros
-              <br />
-              ativos
-            </span>
-            <span className={styles.heroStatValue}>
-              {
-                [
-                  filterTypeId,
-                  filterTransactionType,
-                  filterStartDate,
-                  filterEndDate,
-                  searchTerm,
-                ].filter(Boolean).length
-              }
-            </span>
-          </div>
-        </div>
-      </section>
+      <SessionTopbar
+        user={user}
+        navItems={NAV_ITEMS}
+        activeNav={activeSection}
+        onNavigate={setActiveSection}
+        onLogout={handleLogout}
+        loggingOut={loggingOut}
+      />
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 
-      <section className={styles.split}>
-        <div className={styles.stack}>
-          <PaymentForm
-            title="Novo pagamento"
-            transactionType="payment"
+      {activeSection === "home" && (
+        <section className={styles.homeStack}>
+          <section className={styles.hero}>
+            <div className={styles.heroText}>
+              <p className={styles.kicker}>Financeiro</p>
+              <h1 className={styles.heroTitle}>
+                Controle de pagamentos e transferencias
+              </h1>
+              <p className={styles.heroSubtitle}>
+                Cartorio 1o Oficio de Notas e Registros de Imoveis de Santarem -
+                PA
+              </p>
+            </div>
+            <div className={styles.heroCard}>
+              <div className={styles.heroStat}>
+                <span className={styles.heroStatLabel}>
+                  Tipos
+                  <br />
+                  cadastrados
+                </span>
+                <span className={styles.heroStatValue}>
+                  {paymentTypes.length}
+                </span>
+              </div>
+              <div className={styles.heroStat}>
+                <span className={styles.heroStatLabel}>
+                  Lancamentos listados
+                </span>
+                <span className={styles.heroStatValue}>
+                  {pagination.totalItems || payments.length}
+                </span>
+              </div>
+              <div className={styles.heroStat}>
+                <span className={styles.heroStatLabel}>
+                  Filtros
+                  <br />
+                  ativos
+                </span>
+                <span className={styles.heroStatValue}>
+                  {activeFiltersCount}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <div className={styles.homeFiltersFull}>
+            <FiltersPanel
+              paymentTypes={paymentTypes}
+              filterTypeId={filterTypeId}
+              filterTransactionType={filterTransactionType}
+              filterStartDate={filterStartDate}
+              filterEndDate={filterEndDate}
+              searchTerm={searchTerm}
+              onTypeChange={setFilterTypeId}
+              onTransactionTypeChange={setFilterTransactionType}
+              onStartDateChange={(value) =>
+                setFilterStartDate(sanitizeDateInput(value))
+              }
+              onEndDateChange={(value) =>
+                setFilterEndDate(sanitizeDateInput(value))
+              }
+              onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
+              onApply={handleApplyFilters}
+              onReport={fetchReport}
+            />
+          </div>
+
+          <section className={styles.homeBoard}>
+            <div className={`${styles.panel} ${styles.homePrimary}`}>
+              <p className={styles.helperText}>Visao geral</p>
+              <h2>Pagamentos e transferencias</h2>
+              <p className={styles.homeLead}>
+                Acompanhe os lancamentos e o saldo geral sem sair da tela
+                inicial. Resumo rapido dos valores listados e do total geral.
+              </p>
+              <div className={styles.statGrid}>
+                <div className={styles.statCard}>
+                  <span className={styles.statLabel}>Valor total</span>
+                  <strong className={styles.statValue}>
+                    {formatCurrencyFromNumber(
+                      Number(totals.overallAmount || 0)
+                    )}
+                  </strong>
+                  <span className={styles.muted}>Soma geral de pagamentos</span>
+                </div>
+              </div>
+
+              <div className={styles.homeList}>
+                <PaymentsTable
+                  payments={payments}
+                  paymentTypes={paymentTypes}
+                  isAdmin={isAdmin}
+                  loadingPayments={loadingPayments}
+                  uploadingId={uploadingId}
+                  deletingReceiptId={deletingReceiptId}
+                  pagination={pagination}
+                  totals={totals}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  actionsMode="view"
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onUpload={handleUploadReceipt}
+                  onDeleteReceipt={handleDeleteReceipt}
+                  onSort={handleSortChange}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                />
+              </div>
+            </div>
+          </section>
+        </section>
+      )}
+
+      {activeSection === "lancamentos" && (
+        <section className={styles.sectionBlock}>
+          <div className={styles.split}>
+            <PaymentForm
+              title="Novo pagamento"
+              transactionType="payment"
+              isAdmin={isAdmin}
+              paymentTypes={paymentTypes}
+              editingId={editing?.kind === "payment" ? editing.id : null}
+              formDate={formState.payment.date}
+              formTypeId={formState.payment.typeId}
+              formDescription={formState.payment.description}
+              formAmount={formState.payment.amount}
+              onDateChange={(value) =>
+                updateFormField("payment", "date", sanitizeDateInput(value))
+              }
+              onTypeChange={(value) =>
+                updateFormField("payment", "typeId", value)
+              }
+              onDescriptionChange={(value) =>
+                updateFormField("payment", "description", value)
+              }
+              onAmountChange={(value) =>
+                updateFormField("payment", "amount", formatCurrencyInput(value))
+              }
+              onSubmit={(e) => handleSubmit(e, "payment")}
+              onCancel={() => resetForm("payment")}
+              accent
+            />
+
+            <PaymentForm
+              title="Nova transferencia"
+              transactionType="transfer"
+              isAdmin={isAdmin}
+              paymentTypes={paymentTypes}
+              editingId={editing?.kind === "transfer" ? editing.id : null}
+              formDate={formState.transfer.date}
+              formTypeId={formState.transfer.typeId}
+              formDescription={formState.transfer.description}
+              formAmount={formState.transfer.amount}
+              onDateChange={(value) =>
+                updateFormField("transfer", "date", sanitizeDateInput(value))
+              }
+              onTypeChange={(value) =>
+                updateFormField("transfer", "typeId", value)
+              }
+              onDescriptionChange={(value) =>
+                updateFormField("transfer", "description", value)
+              }
+              onAmountChange={(value) =>
+                updateFormField(
+                  "transfer",
+                  "amount",
+                  formatCurrencyInput(value)
+                )
+              }
+              onSubmit={(e) => handleSubmit(e, "transfer")}
+              onCancel={() => resetForm("transfer")}
+            />
+          </div>
+
+          <div className={styles.dataGrid}>
+            <div className={styles.filtersColumn}>
+              <FiltersPanel
+                paymentTypes={paymentTypes}
+                filterTypeId={filterTypeId}
+                filterTransactionType={filterTransactionType}
+                filterStartDate={filterStartDate}
+                filterEndDate={filterEndDate}
+                searchTerm={searchTerm}
+                onTypeChange={setFilterTypeId}
+                onTransactionTypeChange={setFilterTransactionType}
+                onStartDateChange={(value) =>
+                  setFilterStartDate(sanitizeDateInput(value))
+                }
+                onEndDateChange={(value) =>
+                  setFilterEndDate(sanitizeDateInput(value))
+                }
+                onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
+                onApply={handleApplyFilters}
+                onReport={fetchReport}
+              />
+            </div>
+
+            <div className={styles.listColumn}>
+              <PaymentsTable
+                payments={payments}
+                paymentTypes={paymentTypes}
+                isAdmin={isAdmin}
+                loadingPayments={loadingPayments}
+                uploadingId={uploadingId}
+                deletingReceiptId={deletingReceiptId}
+                pagination={pagination}
+                totals={totals}
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onUpload={handleUploadReceipt}
+                onDeleteReceipt={handleDeleteReceipt}
+                onSort={handleSortChange}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {activeSection === "tipos" && (
+        <section className={styles.sectionBlock}>
+          <PaymentTypeManager
             isAdmin={isAdmin}
             paymentTypes={paymentTypes}
-            editingId={editing?.kind === "payment" ? editing.id : null}
-            formDate={formState.payment.date}
-            formTypeId={formState.payment.typeId}
-            formDescription={formState.payment.description}
-            formAmount={formState.payment.amount}
-            onDateChange={(value) =>
-              updateFormField("payment", "date", sanitizeDateInput(value))
-            }
-            onTypeChange={(value) => updateFormField("payment", "typeId", value)}
-            onDescriptionChange={(value) =>
-              updateFormField("payment", "description", value)
-            }
-            onAmountChange={(value) =>
-              updateFormField("payment", "amount", formatCurrencyInput(value))
-            }
-            onSubmit={(e) => handleSubmit(e, "payment")}
-            onCancel={() => resetForm("payment")}
-            accent
+            paymentTypeName={paymentTypeName}
+            paymentTypeEditingId={paymentTypeEditingId}
+            loadingPaymentTypes={loadingPaymentTypes}
+            onNameChange={setPaymentTypeName}
+            onSubmit={handlePaymentTypeSubmit}
+            onCancel={resetPaymentTypeForm}
+            onEdit={handlePaymentTypeEdit}
+            onDelete={handlePaymentTypeDelete}
           />
+        </section>
+      )}
 
-          <PaymentForm
-            title="Nova transferencia"
-            transactionType="transfer"
-            isAdmin={isAdmin}
+      {activeSection === "relatorio" && (
+        <section className={styles.sectionBlock}>
+          <div className={styles.filtersColumn}>
+            <FiltersPanel
+              paymentTypes={paymentTypes}
+              filterTypeId={filterTypeId}
+              filterTransactionType={filterTransactionType}
+              filterStartDate={filterStartDate}
+              filterEndDate={filterEndDate}
+              searchTerm={searchTerm}
+              onTypeChange={setFilterTypeId}
+              onTransactionTypeChange={setFilterTransactionType}
+              onStartDateChange={(value) =>
+                setFilterStartDate(sanitizeDateInput(value))
+              }
+              onEndDateChange={(value) =>
+                setFilterEndDate(sanitizeDateInput(value))
+              }
+              onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
+              onApply={handleApplyFilters}
+              onReport={fetchReport}
+            />
+          </div>
+
+          <ReportPanel
+            loadingReport={loadingReport}
+            reportTotal={reportTotal}
+            reportPayments={reportPayments}
             paymentTypes={paymentTypes}
-            editingId={editing?.kind === "transfer" ? editing.id : null}
-            formDate={formState.transfer.date}
-            formTypeId={formState.transfer.typeId}
-            formDescription={formState.transfer.description}
-            formAmount={formState.transfer.amount}
-            onDateChange={(value) =>
-              updateFormField("transfer", "date", sanitizeDateInput(value))
-            }
-            onTypeChange={(value) =>
-              updateFormField("transfer", "typeId", value)
-            }
-            onDescriptionChange={(value) =>
-              updateFormField("transfer", "description", value)
-            }
-            onAmountChange={(value) =>
-              updateFormField("transfer", "amount", formatCurrencyInput(value))
-            }
-            onSubmit={(e) => handleSubmit(e, "transfer")}
-            onCancel={() => resetForm("transfer")}
           />
-        </div>
-
-        <PaymentTypeManager
-          isAdmin={isAdmin}
-          paymentTypes={paymentTypes}
-          paymentTypeName={paymentTypeName}
-          paymentTypeEditingId={paymentTypeEditingId}
-          loadingPaymentTypes={loadingPaymentTypes}
-          onNameChange={setPaymentTypeName}
-          onSubmit={handlePaymentTypeSubmit}
-          onCancel={resetPaymentTypeForm}
-          onEdit={handlePaymentTypeEdit}
-          onDelete={handlePaymentTypeDelete}
-        />
-      </section>
-
-      <FiltersPanel
-        paymentTypes={paymentTypes}
-        filterTypeId={filterTypeId}
-        filterTransactionType={filterTransactionType}
-        filterStartDate={filterStartDate}
-        filterEndDate={filterEndDate}
-        searchTerm={searchTerm}
-        onTypeChange={setFilterTypeId}
-        onTransactionTypeChange={setFilterTransactionType}
-        onStartDateChange={(value) => setFilterStartDate(sanitizeDateInput(value))}
-        onEndDateChange={(value) => setFilterEndDate(sanitizeDateInput(value))}
-        onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
-        onApply={handleApplyFilters}
-        onReport={fetchReport}
-      />
-
-      <ReportPanel
-        loadingReport={loadingReport}
-        reportTotal={reportTotal}
-        reportPayments={reportPayments}
-        paymentTypes={paymentTypes}
-      />
-
-      <PaymentsTable
-        payments={payments}
-        paymentTypes={paymentTypes}
-        isAdmin={isAdmin}
-        loadingPayments={loadingPayments}
-        uploadingId={uploadingId}
-        deletingReceiptId={deletingReceiptId}
-        pagination={pagination}
-        totals={totals}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onUpload={handleUploadReceipt}
-        onDeleteReceipt={handleDeleteReceipt}
-        onSort={handleSortChange}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
-      />
+        </section>
+      )}
     </main>
   );
 }

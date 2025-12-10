@@ -25,6 +25,7 @@ interface PaymentsTableProps {
   };
   sortBy: PaymentSortField;
   sortOrder: "asc" | "desc";
+  actionsMode?: "full" | "view";
   onEdit: (payment: Payment) => void;
   onDelete: (id: number) => void;
   onUpload: (paymentId: number, file?: File | null) => void;
@@ -52,6 +53,7 @@ export function PaymentsTable({
   totals,
   sortBy,
   sortOrder,
+  actionsMode = "full",
   onEdit,
   onDelete,
   onUpload,
@@ -61,6 +63,7 @@ export function PaymentsTable({
   onPageSizeChange,
 }: PaymentsTableProps) {
   const { page, pageSize, totalItems, totalPages } = pagination;
+  const viewOnly = actionsMode === "view";
   const canPrev = page > 1;
   const canNext = totalPages > 0 && page < totalPages;
   const pageLabel = totalItems === 0 ? 0 : page;
@@ -119,7 +122,7 @@ export function PaymentsTable({
                 <th>{renderSortable("Tipo", "paymentType")}</th>
                 <th>{renderSortable("Descricao", "description")}</th>
                 <th>{renderSortable("Valor", "amount")}</th>
-                <th>Acoes</th>
+                <th>Comprovante</th>
               </tr>
             </thead>
             <tbody>
@@ -142,7 +145,7 @@ export function PaymentsTable({
                   <td>{formatCurrency(Number(p.amount))}</td>
                   <td>
                     <div className={styles.actions}>
-                      {isAdmin && (
+                      {isAdmin && !viewOnly && (
                         <>
                           <button
                             onClick={() => onEdit(p)}
@@ -178,7 +181,7 @@ export function PaymentsTable({
                           </label>
                         </>
                       )}
-                      {p.receiptUrl && (
+                      {p.receiptUrl ? (
                         <>
                           <a
                             href={p.receiptUrl}
@@ -188,7 +191,7 @@ export function PaymentsTable({
                           >
                             Ver comprovante
                           </a>
-                          {isAdmin && (
+                          {isAdmin && !viewOnly && (
                             <button
                               onClick={() => onDeleteReceipt(p.id)}
                               className={`${styles.btn} ${styles.btnSmall} ${styles.btnDanger}`}
@@ -200,8 +203,10 @@ export function PaymentsTable({
                             </button>
                           )}
                         </>
+                      ) : (
+                        <span className={styles.muted}>Sem comprovante</span>
                       )}
-                      {!isAdmin && !p.receiptUrl && (
+                      {!isAdmin && !p.receiptUrl && !viewOnly && (
                         <span className={styles.muted}>Apenas admin altera</span>
                       )}
                     </div>
