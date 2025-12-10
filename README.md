@@ -189,7 +189,17 @@ npm run user:create
 - GET/GET:report acessíveis a `admin` e `operator`. Demais rotas (POST/PUT/DELETE, upload/remover recibo) requerem `admin`.
 
 - GET /payments  
-  Com filtros: `curl "http://localhost:3333/payments?paymentTypeId=1&startDate=2025-01-01&endDate=2025-01-31"`
+  Com filtros: `curl "http://localhost:3333/payments?paymentTypeId=1&startDate=2025-01-01&endDate=2025-01-31"`  
+  Suporta paginação/busca/ordenação com `page`, `pageSize`, `search`, `sortBy` (`date`, `amount`, `description`, `paymentType`, `transactionType`, `createdAt`) e `sortOrder` (`asc`/`desc`).  
+  Resposta:
+  ```json
+  {
+    "payments": [{ "...": "..." }],
+    "pagination": { "page": 1, "pageSize": 10, "totalItems": 42, "totalPages": 5 },
+    "totals": { "pageAmount": 1234.56, "overallAmount": 9876.54 },
+    "sort": { "sortBy": "date", "sortOrder": "DESC" }
+  }
+  ```
 - GET /payments/:id  
   Ex.: `curl http://localhost:3333/payments/1`
 - GET /payments/report  
