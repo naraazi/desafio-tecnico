@@ -7,10 +7,12 @@ interface FiltersPanelProps {
   filterTransactionType: string;
   filterStartDate: string;
   filterEndDate: string;
+  searchTerm: string;
   onTypeChange: (value: string) => void;
   onTransactionTypeChange: (value: string) => void;
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
   onApply: (e: React.FormEvent) => void;
   onReport: (e?: React.FormEvent) => void;
 }
@@ -21,10 +23,12 @@ export function FiltersPanel({
   filterTransactionType,
   filterStartDate,
   filterEndDate,
+  searchTerm,
   onTypeChange,
   onTransactionTypeChange,
   onStartDateChange,
   onEndDateChange,
+  onSearchChange,
   onApply,
   onReport,
 }: FiltersPanelProps) {
@@ -38,6 +42,17 @@ export function FiltersPanel({
         <span className={styles.badgeLight}>Busca refinada</span>
       </div>
       <form onSubmit={onApply} className={`${styles.formGrid} ${styles.filters}`}>
+        <div className={styles.field}>
+          <label className={styles.label}>Buscar</label>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder="Descricao ou tipo de pagamento"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
+        </div>
+
         <div className={styles.field}>
           <label className={styles.label}>Tipo de lancamento</label>
           <select
