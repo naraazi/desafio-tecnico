@@ -8,6 +8,7 @@ type RepoMock<T> = {
   create: ReturnType<typeof vi.fn>;
   save: ReturnType<typeof vi.fn>;
   remove: ReturnType<typeof vi.fn>;
+  createQueryBuilder: ReturnType<typeof vi.fn>;
 };
 
 const createRepoMock = <T>(): RepoMock<T> => ({
@@ -15,12 +16,40 @@ const createRepoMock = <T>(): RepoMock<T> => ({
   create: vi.fn(),
   save: vi.fn(),
   remove: vi.fn(),
+  createQueryBuilder: vi.fn(),
 });
 
 const { s3SendMock } = vi.hoisted(() => ({ s3SendMock: vi.fn() }));
 const { repoFactory } = vi.hoisted(() => ({
   repoFactory: <T>() => createRepoMock<T>(),
 }));
+
+const createQueryBuilderMock = (
+  payments: Partial<Payment>[],
+  totals: { count: string; amount: string }
+) => {
+  const clone: any = {
+    select: vi.fn().mockReturnThis(),
+    addSelect: vi.fn().mockReturnThis(),
+    getRawOne: vi.fn().mockResolvedValue(totals),
+    andWhere: vi.fn().mockReturnThis(),
+    leftJoinAndSelect: vi.fn().mockReturnThis(),
+  };
+
+  const base: any = {
+    leftJoinAndSelect: vi.fn().mockReturnThis(),
+    andWhere: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    addOrderBy: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    take: vi.fn().mockReturnThis(),
+    getMany: vi.fn().mockResolvedValue(payments),
+    clone: vi.fn().mockReturnValue(clone),
+    whereCalls: [] as any[],
+  };
+
+  return { base, clone };
+};
 
 let paymentRepo = repoFactory<Payment>();
 let paymentTypeRepo = repoFactory<any>();
@@ -225,19 +254,89 @@ describe("PaymentService", () => {
     );
   });
 
-  it("report soma total usando list", async () => {
-    const listSpy = vi
-      .spyOn(service as any, "list")
-      .mockResolvedValue([
+  it("report soma total usando query builder filtrado", async () => {
+    const qb = {
+      leftJoinAndSelect: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      getMany: vi.fn().mockResolvedValue([
         { id: 1, amount: 10 } as Payment,
         { id: 2, amount: 5.5 } as Payment,
-      ]);
+      ]),
+    };
+    paymentRepo.createQueryBuilder.mockReturnValue(qb as any);
 
-    const result = await service.report({});
+    const result = await service.report({ search: "folha" });
 
-    expect(listSpy).toHaveBeenCalled();
+    expect(qb.orderBy).toHaveBeenCalledWith("payment.date", "DESC");
     expect(result.total).toBe(15.5);
     expect(result.payments).toHaveLength(2);
+  });
+
+  it("lista pagamentos com paginacao, ordenacao e totais", async () => {
+    const payments = [
+      { id: 10, amount: 12.34 } as Payment,
+      { id: 11, amount: 18.06 } as Payment,
+    ];
+    const qbMock = createQueryBuilderMock(payments, {
+      count: "4",
+      amount: "60.40",
+    });
+    paymentRepo.createQueryBuilder.mockReturnValue(qbMock.base as any);
+
+    const result = await service.list({
+      page: 2,
+      pageSize: 2,
+      sortBy: "amount",
+      sortOrder: "asc",
+      search: "pago",
+    });
+
+    expect(paymentRepo.createQueryBuilder).toHaveBeenCalled();
+    expect(qbMock.base.orderBy).toHaveBeenCalledWith("payment.amount", "ASC");
+    expect(qbMock.base.skip).toHaveBeenCalledWith(2); // (page 2 - 1) * 2
+    expect(result.pagination.totalItems).toBe(4);
+    expect(result.pagination.totalPages).toBe(2);
+    expect(result.totals.overallAmount).toBe(60.4);
+    expect(result.totals.pageAmount).toBe(30.4);
+  });
+
+  it("aplica busca case-insensitive e ordenacao padrao por data DESC", async () => {
+    const qbMock = createQueryBuilderMock([], { count: "0", amount: "0" });
+    paymentRepo.createQueryBuilder.mockReturnValue(qbMock.base as any);
+
+    await service.list({ search: " Folha " });
+
+    expect(qbMock.base.orderBy).toHaveBeenCalledWith("payment.date", "DESC");
+    expect(qbMock.base.andWhere).toHaveBeenCalledWith(
+      expect.stringContaining("LOWER(payment.description)"),
+      expect.objectContaining({ search: "%folha%" })
+    );
+  });
+
+  it("aceita search vindo como array (duplicado na querystring)", async () => {
+    const qbMock = createQueryBuilderMock([], { count: "0", amount: "0" });
+    paymentRepo.createQueryBuilder.mockReturnValue(qbMock.base as any);
+
+    await service.list({ search: ["Luigi", "Luigi"] as any });
+
+    expect(qbMock.base.andWhere).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ search: "%luigi%" })
+    );
+  });
+
+  it("clampa pagina quando solicitada acima do total disponivel", async () => {
+    const qbMock = createQueryBuilderMock([{ id: 1 } as Payment], {
+      count: "1",
+      amount: "100.00",
+    });
+    paymentRepo.createQueryBuilder.mockReturnValue(qbMock.base as any);
+
+    await service.list({ page: 5, pageSize: 10 });
+
+    expect(qbMock.base.skip).toHaveBeenCalledWith(0); // volta para pagina 1
+    expect(qbMock.base.take).toHaveBeenCalledWith(10);
   });
 
   it("remove comprovante ao deletar pagamento com receiptPath", async () => {
