@@ -73,6 +73,12 @@ export default function PaymentsPage() {
   const [deletingReceiptId, setDeletingReceiptId] = useState<number | null>(
     null
   );
+  const [pendingReceipt, setPendingReceipt] = useState<
+    Record<TransactionKind, File | null>
+  >({
+    payment: null,
+    transfer: null,
+  });
 
   // filtros
   const [filterTypeId, setFilterTypeId] = useState<string>("");
@@ -100,6 +106,7 @@ export default function PaymentsPage() {
     id: number;
     kind: TransactionKind;
   } | null>(null);
+  const [selectedKind, setSelectedKind] = useState<TransactionKind>("payment");
   const [paymentTypeEditingId, setPaymentTypeEditingId] = useState<
     number | null
   >(null);
@@ -250,6 +257,7 @@ export default function PaymentsPage() {
       ...prev,
       [kind]: { ...emptyForm },
     }));
+    setPendingReceipt((prev) => ({ ...prev, [kind]: null }));
     if (editing?.kind === kind) {
       setEditing(null);
     }
@@ -336,6 +344,12 @@ export default function PaymentsPage() {
               ? "Erro ao atualizar lancamento"
               : "Erro ao criar lancamento")
         );
+      }
+
+      const data = await res.json().catch(() => null);
+      const createdId = isEditing ? editing?.id : data?.payment?.id || data?.id;
+      if (pendingReceipt[kind] && createdId) {
+        await handleUploadReceipt(createdId, pendingReceipt[kind]);
       }
 
       await fetchPayments();
@@ -438,6 +452,8 @@ export default function PaymentsPage() {
     if (!isAdmin) return;
     const kind: TransactionKind = payment.transactionType || "payment";
     setEditing({ id: payment.id, kind });
+    setPendingReceipt((prev) => ({ ...prev, [kind]: null }));
+    setSelectedKind(kind);
     setFormState((prev) => ({
       ...prev,
       [kind]: {
@@ -697,6 +713,11 @@ export default function PaymentsPage() {
       : filterTransactionType === "transfer"
       ? "Transferencias"
       : "Pagamentos e transferencias";
+  const recentPayments = [...payments]
+    .sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
+    .slice(0, 3);
 
   return (
     <main className={styles.page}>
@@ -829,108 +850,93 @@ export default function PaymentsPage() {
         <section className={styles.sectionBlock}>
           <div className={styles.split}>
             <PaymentForm
-              title="Novo pagamento"
-              transactionType="payment"
+              title="Novo lancamento"
+              transactionType={selectedKind}
+              onTransactionTypeChange={(value) => setSelectedKind(value)}
               isAdmin={isAdmin}
               paymentTypes={paymentTypes}
-              editingId={editing?.kind === "payment" ? editing.id : null}
-              formDate={formState.payment.date}
-              formTypeId={formState.payment.typeId}
-              formDescription={formState.payment.description}
-              formAmount={formState.payment.amount}
+              editingId={editing?.kind === selectedKind ? editing.id : null}
+              formDate={formState[selectedKind].date}
+              formTypeId={formState[selectedKind].typeId}
+              formDescription={formState[selectedKind].description}
+              formAmount={formState[selectedKind].amount}
               onDateChange={(value) =>
-                updateFormField("payment", "date", sanitizeDateInput(value))
+                updateFormField(selectedKind, "date", sanitizeDateInput(value))
               }
               onTypeChange={(value) =>
-                updateFormField("payment", "typeId", value)
+                updateFormField(selectedKind, "typeId", value)
               }
               onDescriptionChange={(value) =>
-                updateFormField("payment", "description", value)
-              }
-              onAmountChange={(value) =>
-                updateFormField("payment", "amount", formatCurrencyInput(value))
-              }
-              onSubmit={(e) => handleSubmit(e, "payment")}
-              onCancel={() => resetForm("payment")}
-              accent
-            />
-
-            <PaymentForm
-              title="Nova transferencia"
-              transactionType="transfer"
-              isAdmin={isAdmin}
-              paymentTypes={paymentTypes}
-              editingId={editing?.kind === "transfer" ? editing.id : null}
-              formDate={formState.transfer.date}
-              formTypeId={formState.transfer.typeId}
-              formDescription={formState.transfer.description}
-              formAmount={formState.transfer.amount}
-              onDateChange={(value) =>
-                updateFormField("transfer", "date", sanitizeDateInput(value))
-              }
-              onTypeChange={(value) =>
-                updateFormField("transfer", "typeId", value)
-              }
-              onDescriptionChange={(value) =>
-                updateFormField("transfer", "description", value)
+                updateFormField(selectedKind, "description", value)
               }
               onAmountChange={(value) =>
                 updateFormField(
-                  "transfer",
+                  selectedKind,
                   "amount",
                   formatCurrencyInput(value)
                 )
               }
-              onSubmit={(e) => handleSubmit(e, "transfer")}
-              onCancel={() => resetForm("transfer")}
+              onSubmit={(e) => handleSubmit(e, selectedKind)}
+              onCancel={() => resetForm(selectedKind)}
+              onAttachReceipt={(file) =>
+                setPendingReceipt((prev) => ({
+                  ...prev,
+                  [selectedKind]: file,
+                }))
+              }
+              accent
             />
           </div>
 
-          <div className={styles.dataGrid}>
-            <div className={styles.filtersColumn}>
-              <FiltersPanel
-                paymentTypes={paymentTypes}
-                filterTypeId={filterTypeId}
-                filterTransactionType={filterTransactionType}
-                filterStartDate={filterStartDate}
-                filterEndDate={filterEndDate}
-                searchTerm={searchTerm}
-                onTypeChange={setFilterTypeId}
-                onTransactionTypeChange={setFilterTransactionType}
-                onStartDateChange={(value) =>
-                  setFilterStartDate(sanitizeDateInput(value))
-                }
-                onEndDateChange={(value) =>
-                  setFilterEndDate(sanitizeDateInput(value))
-                }
-                onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
-                onApply={handleApplyFilters}
-                onReport={fetchReport}
-              />
+          <section className={styles.panel}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <p className={styles.helperText}>Historico</p>
+                <h2>Ultimos registros</h2>
+              </div>
+              <span className={styles.badgeLight}>3 mais recentes</span>
             </div>
 
-            <div className={styles.listColumn}>
-              <PaymentsTable
-                payments={payments}
-                paymentTypes={paymentTypes}
-                isAdmin={isAdmin}
-                loadingPayments={loadingPayments}
-                uploadingId={uploadingId}
-                deletingReceiptId={deletingReceiptId}
-                pagination={pagination}
-                totals={totals}
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onUpload={handleUploadReceipt}
-                onDeleteReceipt={handleDeleteReceipt}
-                onSort={handleSortChange}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
-              />
-            </div>
-          </div>
+            {recentPayments.length === 0 ? (
+              <p className={styles.empty}>Nenhum lancamento encontrado.</p>
+            ) : (
+              <ul className={styles.historyList}>
+                {recentPayments.map((p) => (
+                  <li key={p.id} className={styles.historyItem}>
+                  <div className={styles.historyMain}>
+                    <div className={styles.historyTitle}>
+                      <span className={styles.historyDate}>
+                        {isoToDisplay(p.date)}
+                      </span>
+                        <span className={styles.status}>
+                          {p.transactionType === "transfer"
+                            ? "Transferencia"
+                            : "Pagamento"}
+                        </span>
+                        <strong>{p.description}</strong>
+                      </div>
+                      <span className={styles.historyAmount}>
+                        {formatCurrencyFromNumber(Number(p.amount))}
+                      </span>
+                    </div>
+                    <div className={styles.historyMeta}>
+                      <span>
+                        Tipo:{" "}
+                        {p.paymentType?.name ||
+                          paymentTypes.find((t) => t.id === p.paymentTypeId)
+                            ?.name ||
+                          "-"}
+                      </span>
+                      <span>
+                        Comprovante:{" "}
+                        {p.receiptUrl ? "Presente" : "Sem comprovante"}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </section>
       )}
 

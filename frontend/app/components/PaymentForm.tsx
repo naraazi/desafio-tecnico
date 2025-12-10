@@ -5,6 +5,7 @@ import type { PaymentType } from "../../types/payment";
 interface PaymentFormProps {
   title: string;
   transactionType: "payment" | "transfer";
+  onTransactionTypeChange?: (value: "payment" | "transfer") => void;
   isAdmin: boolean;
   paymentTypes: PaymentType[];
   editingId: number | null;
@@ -18,12 +19,14 @@ interface PaymentFormProps {
   onAmountChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
+  onAttachReceipt?: (file: File | null) => void;
   accent?: boolean;
 }
 
 export function PaymentForm({
   title,
   transactionType,
+  onTransactionTypeChange,
   isAdmin,
   paymentTypes,
   editingId,
@@ -37,6 +40,7 @@ export function PaymentForm({
   onAmountChange,
   onSubmit,
   onCancel,
+  onAttachReceipt,
   accent = false,
 }: PaymentFormProps) {
   const isTransfer = transactionType === "transfer";
@@ -47,7 +51,7 @@ export function PaymentForm({
   const submitLabel = editingId
     ? "Salvar edicao"
     : isTransfer
-    ? "Criar transferencia"
+    ? "Criar registro"
     : "Criar pagamento";
 
   return (
@@ -79,6 +83,23 @@ export function PaymentForm({
 
       <form onSubmit={onSubmit} className={styles.formGrid}>
         <div className={styles.field}>
+          <label className={styles.label}>Natureza do lancamento</label>
+          <select
+            className={styles.input}
+            value={transactionType}
+            disabled={!isAdmin || !onTransactionTypeChange}
+            onChange={(e) =>
+              onTransactionTypeChange?.(
+                e.target.value === "transfer" ? "transfer" : "payment"
+              )
+            }
+          >
+            <option value="payment">Pagamento</option>
+            <option value="transfer">Transferencia</option>
+          </select>
+        </div>
+
+        <div className={styles.field}>
           <label className={styles.label}>Data</label>
           <input
             className={styles.input}
@@ -93,9 +114,7 @@ export function PaymentForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>
-            Tipo de pagamento/transferencia
-          </label>
+          <label className={styles.label}>Tipo</label>
           <select
             className={styles.input}
             value={formTypeId}
@@ -137,6 +156,24 @@ export function PaymentForm({
         </div>
 
         <div className={styles.actions}>
+          <label
+            className={`${styles.btn} ${styles.btnSecondary}`}
+            aria-label="Anexar comprovante"
+          >
+            Anexar comprovante
+            <input
+              type="file"
+              accept="application/pdf,image/png,image/jpeg"
+              className={styles.fileInput}
+              disabled={!isAdmin}
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null;
+                onAttachReceipt?.(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+
           <button
             type="submit"
             className={`${styles.btn} ${styles.btnPrimary}`}

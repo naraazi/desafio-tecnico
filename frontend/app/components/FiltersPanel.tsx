@@ -48,7 +48,10 @@ export function FiltersPanel({
         </div>
         <span className={styles.badgeLight}>Busca refinada</span>
       </div>
-      <form onSubmit={handleSubmit} className={`${styles.formGrid} ${styles.filters}`}>
+      <form
+        onSubmit={handleSubmit}
+        className={`${styles.formGrid} ${styles.filters}`}
+      >
         <div className={styles.field}>
           <label className={styles.label}>Buscar</label>
           <input
@@ -74,7 +77,7 @@ export function FiltersPanel({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Tipo de pagamento</label>
+          <label className={styles.label}>Tipo</label>
           <select
             className={styles.input}
             value={filterTypeId}

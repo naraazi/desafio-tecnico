@@ -16,7 +16,7 @@ export class PaymentTypeService {
 
     if (inUseCount > 0) {
       throw new AppError(
-        "Tipo de pagamento esta em uso e nao pode ser alterado ou removido.",
+        "Tipo esta em uso e nao pode ser alterado ou removido.",
         409
       );
     }
@@ -83,7 +83,7 @@ export class PaymentTypeService {
 
     const paymentType = await paymentTypeRepository.findOne({ where: { id } });
     if (!paymentType) {
-      throw new AppError("Tipo de pagamento nao encontrado.", 404);
+      throw new AppError("Tipo nao encontrado.", 404);
     }
 
     await this.ensureNotInUse(id);
@@ -107,7 +107,7 @@ export class PaymentTypeService {
 
     const paymentType = await paymentTypeRepository.findOne({ where: { id } });
     if (!paymentType) {
-      throw new AppError("Tipo de pagamento nao encontrado.", 404);
+      throw new AppError("Tipo nao encontrado.", 404);
     }
 
     await this.ensureNotInUse(id);

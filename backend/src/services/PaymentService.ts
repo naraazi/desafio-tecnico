@@ -80,7 +80,10 @@ export class PaymentService {
   private normalizeTransactionType(type?: string): TransactionType {
     if (!type) return "payment";
     if (type === "payment" || type === "transfer") return type;
-    throw new AppError("Tipo de lancamento invalido. Use payment ou transfer.", 400);
+    throw new AppError(
+      "Tipo de lancamento invalido. Use payment ou transfer.",
+      400
+    );
   }
 
   private buildPublicUrl(key: string) {
@@ -177,7 +180,10 @@ export class PaymentService {
     return query;
   }
 
-  private resolveSort(sortBy?: string, sortOrder?: string): {
+  private resolveSort(
+    sortBy?: string,
+    sortOrder?: string
+  ): {
     sortBy: PaymentSortField;
     sortOrder: "ASC" | "DESC";
     column: string;
@@ -192,9 +198,9 @@ export class PaymentService {
       createdAt: "payment.createdAt",
     };
 
-    const normalizedSortBy = (Object.keys(sortMap) as PaymentSortField[]).includes(
-      sortBy as PaymentSortField
-    )
+    const normalizedSortBy = (
+      Object.keys(sortMap) as PaymentSortField[]
+    ).includes(sortBy as PaymentSortField)
       ? (sortBy as PaymentSortField)
       : "date";
 
@@ -232,21 +238,20 @@ export class PaymentService {
       .getRawOne<{ count: string; amount: string }>();
 
     const totalItems = totalsRow ? Number(totalsRow.count) : 0;
-    const overallAmount = this.normalizeAmount(
-      Number(totalsRow?.amount ?? 0)
-    );
+    const overallAmount = this.normalizeAmount(Number(totalsRow?.amount ?? 0));
 
     const requestedPage = Math.max(1, Number(filters?.page) || 1);
     const pageSize = Math.max(
       1,
       Math.min(100, Number(filters?.pageSize) || 10)
     );
-    const totalPages =
-      totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
-    const page =
-      totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
+    const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
+    const page = totalPages > 0 ? Math.min(requestedPage, totalPages) : 1;
 
-    const sort = this.resolveSort(filters?.sortBy as string, filters?.sortOrder as string);
+    const sort = this.resolveSort(
+      filters?.sortBy as string,
+      filters?.sortOrder as string
+    );
     baseQuery.orderBy(sort.column, sort.sortOrder);
     if (sort.secondary) {
       baseQuery.addOrderBy(sort.secondary.column, sort.secondary.order);
@@ -316,7 +321,7 @@ export class PaymentService {
       where: { id: paymentTypeId },
     });
     if (!paymentTypeExists) {
-      throw new AppError("Tipo de pagamento nao encontrado.", 404);
+      throw new AppError("Tipo nao encontrado.", 404);
     }
 
     const existing = await paymentRepository.findOne({
@@ -371,7 +376,7 @@ export class PaymentService {
       : payment.date;
     const normalizedDescription = data.description
       ? this.normalizeDescription(data.description)
-        : payment.description;
+      : payment.description;
     const normalizedAmount =
       typeof data.amount === "number"
         ? this.normalizeAmount(data.amount)
@@ -389,7 +394,7 @@ export class PaymentService {
         where: { id: data.paymentTypeId },
       });
       if (!paymentTypeExists) {
-        throw new AppError("Tipo de pagamento nao encontrado.", 404);
+        throw new AppError("Tipo nao encontrado.", 404);
       }
     }
 
@@ -456,7 +461,10 @@ export class PaymentService {
     const detectedType = await fileType.fromBuffer(file.buffer);
 
     if (!detectedType) {
-      throw new AppError("Nao foi possivel identificar o tipo do arquivo.", 400);
+      throw new AppError(
+        "Nao foi possivel identificar o tipo do arquivo.",
+        400
+      );
     }
 
     const isAllowed = ALLOWED_FILE_TYPES.some(
@@ -464,7 +472,10 @@ export class PaymentService {
     );
 
     if (!isAllowed) {
-      throw new AppError("Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.", 400);
+      throw new AppError(
+        "Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.",
+        400
+      );
     }
 
     const key = `receipts/${id}/${Date.now()}.${detectedType.ext}`;

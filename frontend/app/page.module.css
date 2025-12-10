@@ -392,9 +392,9 @@
 
 .actions {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   margin-top: 2px;
 }
 
@@ -403,13 +403,14 @@
   gap: 10px;
   flex-wrap: nowrap;
   align-items: flex-end;
+  white-space: nowrap;
 }
 
 .btn {
   border: 1px solid transparent;
   border-radius: 10px;
-  height: 42px;
-  padding: 0 16px;
+  min-height: 46px;
+  padding: 0 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -417,6 +418,7 @@
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease,
     background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn:hover {
@@ -593,6 +595,55 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.historyList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.historyMain {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.historyTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.historyDate {
+  font-weight: 700;
+  color: var(--text-900);
+}
+
+.historyAmount {
+  font-weight: 800;
+  color: var(--blue-900);
+}
+
+.historyMeta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .dataGrid {
