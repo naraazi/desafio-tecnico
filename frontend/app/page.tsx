@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type {
   Payment,
+  PaymentListResponse,
   PaymentReportResponse,
+  PaymentSortField,
   PaymentType,
 } from "../types/payment";
 import type { User } from "../types/user";
@@ -25,6 +27,7 @@ import {
 import styles from "./page.module.css";
 
 type TransactionKind = "payment" | "transfer";
+type SortOrder = "asc" | "desc";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -44,6 +47,16 @@ export default function PaymentsPage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
+  const [totals, setTotals] = useState({ pageAmount: 0, overallAmount: 0 });
+  const [sortBy, setSortBy] = useState<PaymentSortField>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [loadingPayments, setLoadingPayments] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingPaymentTypes, setLoadingPaymentTypes] = useState(false);
@@ -86,6 +99,12 @@ export default function PaymentsPage() {
   const [reportPayments, setReportPayments] = useState<Payment[]>([]);
 
   const isAdmin = user?.role === "admin";
+  type FetchPaymentsOptions = {
+    page?: number;
+    pageSize?: number;
+    sortBy?: PaymentSortField;
+    sortOrder?: SortOrder;
+  };
 
   useEffect(() => {
     fetchCurrentUser();
@@ -158,7 +177,7 @@ export default function PaymentsPage() {
     }
   }
 
-  async function fetchPayments() {
+  async function fetchPayments(options?: FetchPaymentsOptions) {
     if (!API_URL) {
       setError("API URL nao configurada.");
       return;
@@ -166,6 +185,11 @@ export default function PaymentsPage() {
     try {
       setLoadingPayments(true);
       setError(null);
+
+      const nextPage = options?.page ?? pagination.page ?? 1;
+      const nextPageSize = options?.pageSize ?? pagination.pageSize ?? 10;
+      const nextSortBy = options?.sortBy ?? sortBy;
+      const nextSortOrder = options?.sortOrder ?? sortOrder;
 
       const params = new URLSearchParams();
       if (filterTypeId) params.append("paymentTypeId", filterTypeId);
@@ -175,6 +199,12 @@ export default function PaymentsPage() {
       const endIso = displayToIso(filterEndDate);
       if (startIso) params.append("startDate", startIso);
       if (endIso) params.append("endDate", endIso);
+      if (searchTerm.trim()) params.append("search", searchTerm.trim());
+      if (searchTerm.trim()) params.append("search", searchTerm.trim());
+      params.append("page", String(nextPage));
+      params.append("pageSize", String(nextPageSize));
+      params.append("sortBy", nextSortBy);
+      params.append("sortOrder", nextSortOrder);
 
       const url =
         params.toString().length > 0
@@ -191,8 +221,14 @@ export default function PaymentsPage() {
       if (!res.ok) {
         throw new Error("Erro ao buscar pagamentos");
       }
-      const data: Payment[] = await res.json();
-      setPayments(data);
+      const data: PaymentListResponse = await res.json();
+      setPayments(data.payments);
+      setPagination(data.pagination);
+      setTotals(data.totals);
+      setSortBy(data.sort?.sortBy || nextSortBy);
+      setSortOrder(
+        data.sort?.sortOrder?.toLowerCase() === "asc" ? "asc" : "desc"
+      );
     } catch (err: any) {
       setError(err.message || "Erro inesperado ao buscar pagamentos");
     } finally {
@@ -421,7 +457,13 @@ export default function PaymentsPage() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.message || "Erro ao excluir lancamento");
       }
-      await fetchPayments();
+      const remainingItems = Math.max(pagination.totalItems - 1, 0);
+      const maxPage =
+        remainingItems === 0
+          ? 1
+          : Math.ceil(remainingItems / pagination.pageSize);
+      const targetPage = Math.min(pagination.page, maxPage);
+      await fetchPayments({ page: targetPage });
     } catch (err: any) {
       alert(err.message || "Erro inesperado ao excluir lancamento");
     }
@@ -515,7 +557,30 @@ export default function PaymentsPage() {
 
   function handleApplyFilters(e: React.FormEvent) {
     e.preventDefault();
-    fetchPayments();
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchPayments({ page: 1 });
+  }
+
+  function handleSortChange(field: PaymentSortField) {
+    const isSameField = sortBy === field;
+    const nextOrder: SortOrder =
+      isSameField && sortOrder === "desc" ? "asc" : "desc";
+
+    setSortBy(field);
+    setSortOrder(nextOrder);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    fetchPayments({ page: 1, sortBy: field, sortOrder: nextOrder });
+  }
+
+  function handlePageChange(nextPage: number) {
+    if (nextPage < 1 || nextPage === pagination.page) return;
+    fetchPayments({ page: nextPage });
+  }
+
+  function handlePageSizeChange(nextPageSize: number) {
+    if (!Number.isFinite(nextPageSize) || nextPageSize <= 0) return;
+    setPagination((prev) => ({ ...prev, pageSize: nextPageSize, page: 1 }));
+    fetchPayments({ page: 1, pageSize: nextPageSize });
   }
 
   async function fetchReport(e?: React.FormEvent) {
@@ -624,7 +689,9 @@ export default function PaymentsPage() {
           </div>
           <div className={styles.heroStat}>
             <span className={styles.heroStatLabel}>Lancamentos listados</span>
-            <span className={styles.heroStatValue}>{payments.length}</span>
+            <span className={styles.heroStatValue}>
+              {pagination.totalItems || payments.length}
+            </span>
           </div>
           <div className={styles.heroStat}>
             <span className={styles.heroStatLabel}>
@@ -639,6 +706,7 @@ export default function PaymentsPage() {
                   filterTransactionType,
                   filterStartDate,
                   filterEndDate,
+                  searchTerm,
                 ].filter(Boolean).length
               }
             </span>
@@ -722,10 +790,12 @@ export default function PaymentsPage() {
         filterTransactionType={filterTransactionType}
         filterStartDate={filterStartDate}
         filterEndDate={filterEndDate}
+        searchTerm={searchTerm}
         onTypeChange={setFilterTypeId}
         onTransactionTypeChange={setFilterTransactionType}
         onStartDateChange={(value) => setFilterStartDate(sanitizeDateInput(value))}
         onEndDateChange={(value) => setFilterEndDate(sanitizeDateInput(value))}
+        onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
         onApply={handleApplyFilters}
         onReport={fetchReport}
       />
@@ -744,10 +814,17 @@ export default function PaymentsPage() {
         loadingPayments={loadingPayments}
         uploadingId={uploadingId}
         deletingReceiptId={deletingReceiptId}
+        pagination={pagination}
+        totals={totals}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onUpload={handleUploadReceipt}
         onDeleteReceipt={handleDeleteReceipt}
+        onSort={handleSortChange}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </main>
   );

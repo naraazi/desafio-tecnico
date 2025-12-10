@@ -72,7 +72,8 @@ export function PaymentForm({
 
       {!isAdmin && (
         <div className={styles.lockedMessage}>
-          Apenas administradores podem criar ou editar pagamentos ou transferencias.
+          Apenas administradores podem criar ou editar pagamentos ou
+          transferencias.
         </div>
       )}
 
@@ -92,7 +93,9 @@ export function PaymentForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Tipo de pagamento/transferencia</label>
+          <label className={styles.label}>
+            Tipo de pagamento/transferencia
+          </label>
           <select
             className={styles.input}
             value={formTypeId}
@@ -129,7 +132,7 @@ export function PaymentForm({
             disabled={!isAdmin}
             onChange={(e) => onAmountChange(e.target.value)}
             inputMode="decimal"
-            placeholder={isTransfer ? "0,00 (saida/entrada)" : "0,00"}
+            placeholder={isTransfer ? "0,00" : "0,00"}
           />
         </div>
 

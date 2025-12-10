@@ -1,5 +1,9 @@
 import styles from "../page.module.css";
-import type { Payment, PaymentType } from "../../types/payment";
+import type {
+  Payment,
+  PaymentSortField,
+  PaymentType,
+} from "../../types/payment";
 import { formatDate } from "../utils/formatters";
 
 interface PaymentsTableProps {
@@ -9,10 +13,32 @@ interface PaymentsTableProps {
   loadingPayments: boolean;
   uploadingId: number | null;
   deletingReceiptId: number | null;
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  totals: {
+    pageAmount: number;
+    overallAmount: number;
+  };
+  sortBy: PaymentSortField;
+  sortOrder: "asc" | "desc";
   onEdit: (payment: Payment) => void;
   onDelete: (id: number) => void;
   onUpload: (paymentId: number, file?: File | null) => void;
   onDeleteReceipt: (paymentId: number) => void;
+  onSort: (field: PaymentSortField) => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+}
+
+function formatCurrency(value: number) {
+  return Number(value || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 }
 
 export function PaymentsTable({
@@ -22,11 +48,40 @@ export function PaymentsTable({
   loadingPayments,
   uploadingId,
   deletingReceiptId,
+  pagination,
+  totals,
+  sortBy,
+  sortOrder,
   onEdit,
   onDelete,
   onUpload,
   onDeleteReceipt,
+  onSort,
+  onPageChange,
+  onPageSizeChange,
 }: PaymentsTableProps) {
+  const { page, pageSize, totalItems, totalPages } = pagination;
+  const canPrev = page > 1;
+  const canNext = totalPages > 0 && page < totalPages;
+  const pageLabel = totalItems === 0 ? 0 : page;
+  const totalPagesLabel = totalItems === 0 ? 0 : Math.max(totalPages, 1);
+
+  function renderSortable(label: string, field: PaymentSortField) {
+    const active = sortBy === field;
+    const indicator = !active ? "↕" : sortOrder === "asc" ? "↑" : "↓";
+
+    return (
+      <button
+        type="button"
+        className={`${styles.sortButton} ${active ? styles.sortButtonActive : ""}`}
+        onClick={() => onSort(field)}
+      >
+        {label}
+        <span className={styles.sortIndicator}>{indicator}</span>
+      </button>
+    );
+  }
+
   if (loadingPayments) {
     return (
       <section className={styles.panel}>
@@ -59,11 +114,11 @@ export function PaymentsTable({
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>Data</th>
-                <th>Natureza</th>
-                <th>Tipo</th>
-                <th>Descricao</th>
-                <th>Valor</th>
+                <th>{renderSortable("Data", "date")}</th>
+                <th>{renderSortable("Natureza", "transactionType")}</th>
+                <th>{renderSortable("Tipo", "paymentType")}</th>
+                <th>{renderSortable("Descricao", "description")}</th>
+                <th>{renderSortable("Valor", "amount")}</th>
                 <th>Acoes</th>
               </tr>
             </thead>
@@ -84,12 +139,7 @@ export function PaymentsTable({
                       "-"}
                   </td>
                   <td>{p.description}</td>
-                  <td>
-                    {Number(p.amount).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </td>
+                  <td>{formatCurrency(Number(p.amount))}</td>
                   <td>
                     <div className={styles.actions}>
                       {isAdmin && (
@@ -162,6 +212,42 @@ export function PaymentsTable({
           </table>
         </div>
       )}
+
+      <div className={styles.tableControls}>
+        <label className={styles.pageSizeSelector}>
+          Itens por pagina
+          <select
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            className={styles.input}
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className={styles.pagination}>
+          <button
+            className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+            onClick={() => onPageChange(page - 1)}
+            disabled={!canPrev}
+          >
+            Anterior
+          </button>
+          <span className={styles.paginationInfo}>
+            Pag. {pageLabel} / {totalPagesLabel}
+          </span>
+          <button
+            className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+            onClick={() => onPageChange(page + 1)}
+            disabled={!canNext}
+          >
+            Proxima
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
