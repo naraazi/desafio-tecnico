@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import type {
   Payment,
@@ -113,6 +113,8 @@ export default function PaymentsPage() {
   const [paymentTypeName, setPaymentTypeName] = useState<string>("");
   const [reportTotal, setReportTotal] = useState<number | null>(null);
   const [reportPayments, setReportPayments] = useState<Payment[]>([]);
+  const formSectionRef = useRef<HTMLDivElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const editingPayment =
     editing ? payments.find((p) => p.id === editing.id) : null;
 
@@ -464,6 +466,10 @@ export default function PaymentsPage() {
         amount: formatCurrencyFromNumber(Number(payment.amount)),
       },
     }));
+    formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => {
+      dateInputRef.current?.focus();
+    }, 150);
   }
 
   async function handleDelete(id: number) {
@@ -844,56 +850,57 @@ export default function PaymentsPage() {
       {activeSection === "lancamentos" && (
         <section className={styles.sectionBlock}>
           <div className={styles.split}>
-            <PaymentForm
-              title="Novo lancamento"
-            transactionType={selectedKind}
-            onTransactionTypeChange={(value) => setSelectedKind(value)}
-            isAdmin={isAdmin}
-              paymentTypes={paymentTypes}
-              editingId={editing?.kind === selectedKind ? editing.id : null}
-              formDate={formState[selectedKind].date}
-              formTypeId={formState[selectedKind].typeId}
-              formDescription={formState[selectedKind].description}
-              formAmount={formState[selectedKind].amount}
-              onDateChange={(value) =>
-                updateFormField(selectedKind, "date", sanitizeDateInput(value))
-              }
-              onTypeChange={(value) =>
-                updateFormField(selectedKind, "typeId", value)
-              }
-              onDescriptionChange={(value) =>
-                updateFormField(selectedKind, "description", value)
-              }
-              onAmountChange={(value) =>
-                updateFormField(
-                  selectedKind,
-                  "amount",
-                  formatCurrencyInput(value)
-                )
-              }
-              onSubmit={(e) => handleSubmit(e, selectedKind)}
-              onCancel={() => resetForm(selectedKind)}
-              onAttachReceipt={(file) =>
-                setPendingReceipt((prev) => ({
-                  ...prev,
-                  [selectedKind]: file,
-                }))
-              }
-              hasAttachedReceipt={
-                !!pendingReceipt[selectedKind] ||
-                !!(editing?.kind === selectedKind && editingPayment?.receiptUrl)
-              }
-              accent
-            />
+            <div ref={formSectionRef}>
+              <PaymentForm
+                title="Novo lancamento"
+                transactionType={selectedKind}
+                onTransactionTypeChange={(value) => setSelectedKind(value)}
+                isAdmin={isAdmin}
+                paymentTypes={paymentTypes}
+                editingId={editing?.kind === selectedKind ? editing.id : null}
+                formDate={formState[selectedKind].date}
+                formTypeId={formState[selectedKind].typeId}
+                formDescription={formState[selectedKind].description}
+                formAmount={formState[selectedKind].amount}
+                onDateChange={(value) =>
+                  updateFormField(selectedKind, "date", sanitizeDateInput(value))
+                }
+                onTypeChange={(value) =>
+                  updateFormField(selectedKind, "typeId", value)
+                }
+                onDescriptionChange={(value) =>
+                  updateFormField(selectedKind, "description", value)
+                }
+                onAmountChange={(value) =>
+                  updateFormField(
+                    selectedKind,
+                    "amount",
+                    formatCurrencyInput(value)
+                  )
+                }
+                onSubmit={(e) => handleSubmit(e, selectedKind)}
+                onCancel={() => resetForm(selectedKind)}
+                onAttachReceipt={(file) =>
+                  setPendingReceipt((prev) => ({
+                    ...prev,
+                    [selectedKind]: file,
+                  }))
+                }
+                hasAttachedReceipt={
+                  !!pendingReceipt[selectedKind] ||
+                  !!(editing?.kind === selectedKind && editingPayment?.receiptUrl)
+                }
+                dateInputRef={dateInputRef}
+                accent
+              />
+            </div>
           </div>
 
           <section className={styles.panel}>
             <div className={styles.sectionHeader}>
               <div>
-                <p className={styles.helperText}>Historico</p>
                 <h2>Todos os lancamentos</h2>
               </div>
-              <span className={styles.badgeLight}>Com paginacao e acoes</span>
             </div>
 
             <PaymentsTable

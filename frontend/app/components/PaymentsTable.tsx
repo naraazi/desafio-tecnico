@@ -122,7 +122,8 @@ export function PaymentsTable({
                 <th>{renderSortable("Tipo", "paymentType")}</th>
                 <th>{renderSortable("Descricao", "description")}</th>
                 <th>{renderSortable("Valor", "amount")}</th>
-                <th>Comprovante</th>
+                <th>Acoes do lancamento</th>
+                <th>Acoes do comprovante</th>
               </tr>
             </thead>
             <tbody>
@@ -145,7 +146,7 @@ export function PaymentsTable({
                   <td>{formatCurrency(Number(p.amount))}</td>
                   <td>
                     <div className={styles.actions}>
-                      {isAdmin && !viewOnly && (
+                      {isAdmin && !viewOnly ? (
                         <>
                           <button
                             onClick={() => onEdit(p)}
@@ -159,27 +160,35 @@ export function PaymentsTable({
                           >
                             Excluir
                           </button>
-                          <label
-                            className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
-                          >
-                            {uploadingId === p.id
-                              ? "Enviando..."
-                              : p.receiptUrl
-                              ? "Alterar comprovante"
-                              : "Enviar comprovante"}
-                            <input
-                              type="file"
-                              accept="application/pdf,image/png,image/jpeg"
-                              className={styles.fileInput}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                onUpload(p.id, file);
-                                e.target.value = "";
-                              }}
-                              disabled={uploadingId === p.id || !isAdmin}
-                            />
-                          </label>
                         </>
+                      ) : (
+                        <span className={styles.muted}>Somente leitura</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div className={styles.actions}>
+                      {isAdmin && !viewOnly && (
+                        <label
+                          className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
+                        >
+                          {uploadingId === p.id
+                            ? "Enviando..."
+                            : p.receiptUrl
+                            ? "Alterar comprovante"
+                            : "Enviar comprovante"}
+                          <input
+                            type="file"
+                            accept="application/pdf,image/png,image/jpeg"
+                            className={styles.fileInput}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              onUpload(p.id, file);
+                              e.target.value = "";
+                            }}
+                            disabled={uploadingId === p.id || !isAdmin}
+                          />
+                        </label>
                       )}
                       {p.receiptUrl ? (
                         <>

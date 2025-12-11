@@ -21,6 +21,7 @@ interface PaymentFormProps {
   onCancel: () => void;
   onAttachReceipt?: (file: File | null) => void;
   hasAttachedReceipt?: boolean;
+  dateInputRef?: React.RefObject<HTMLInputElement>;
   accent?: boolean;
 }
 
@@ -43,6 +44,7 @@ export function PaymentForm({
   onCancel,
   onAttachReceipt,
   hasAttachedReceipt = false,
+  dateInputRef,
   accent = false,
 }: PaymentFormProps) {
   const isTransfer = transactionType === "transfer";
@@ -112,6 +114,7 @@ export function PaymentForm({
             value={formDate}
             disabled={!isAdmin}
             onChange={(e) => onDateChange(e.target.value)}
+            ref={dateInputRef}
           />
         </div>
 
