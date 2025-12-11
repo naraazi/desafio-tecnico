@@ -1,11 +1,15 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { vi } from "vitest";
 import { PaymentsTable } from "../PaymentsTable";
-import type { Payment, PaymentType, PaymentSortField } from "../../../types/payment";
+import type {
+  Payment,
+  PaymentType,
+  PaymentSortField,
+} from "../../../types/payment";
 
 const paymentTypes: PaymentType[] = [
   { id: 1, name: "Folha" },
-  { id: 2, name: "Combustivel" },
+  { id: 2, name: "Combustível" },
 ];
 
 const payments: Payment[] = [
@@ -34,7 +38,9 @@ const defaultPagination = {
   totalPages: 2,
 };
 
-function renderTable(overrides?: Partial<React.ComponentProps<typeof PaymentsTable>>) {
+function renderTable(
+  overrides?: Partial<React.ComponentProps<typeof PaymentsTable>>
+) {
   const props: React.ComponentProps<typeof PaymentsTable> = {
     payments,
     paymentTypes,
@@ -61,29 +67,31 @@ function renderTable(overrides?: Partial<React.ComponentProps<typeof PaymentsTab
 }
 
 describe("PaymentsTable", () => {
-  it("renderiza tabela e controles de paginacao sem totalizadores", () => {
+  it("renderiza tabela e controles de paginação sem totalizadores", () => {
     renderTable();
 
     expect(screen.queryByText(/Mostrando/i)).toBeNull();
     expect(screen.queryByText(/Filtrado/i)).toBeNull();
     expect(screen.getAllByRole("row")).toHaveLength(1 + payments.length); // header + linhas
-    expect(screen.getByLabelText(/Itens por pagina/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Itens por página/i)).toBeInTheDocument();
   });
 
-  it("aciona ordenacao ao clicar no cabecalho", () => {
+  it("aciona ordenação ao clicar no cabeçalho", () => {
     const props = renderTable();
 
     const valorHeader = screen.getByRole("button", { name: /Valor/i });
     fireEvent.click(valorHeader);
 
-    expect(props.onSort).toHaveBeenCalledWith("amount" satisfies PaymentSortField);
+    expect(props.onSort).toHaveBeenCalledWith(
+      "amount" satisfies PaymentSortField
+    );
   });
 
-  it("aciona navegacao entre paginas e respeita disabled", () => {
+  it("aciona navegação entre páginas e respeita disabled", () => {
     const props = renderTable();
 
     const prev = screen.getByRole("button", { name: /Anterior/i });
-    const next = screen.getByRole("button", { name: /Proxima/i });
+    const next = screen.getByRole("button", { name: /Próxima/i });
 
     expect(prev).toBeDisabled();
     expect(next).not.toBeDisabled();
@@ -94,21 +102,21 @@ describe("PaymentsTable", () => {
 
   it("altera quantidade por pagina", () => {
     const props = renderTable();
-    const select = screen.getByLabelText(/Itens por pagina/i);
+    const select = screen.getByLabelText(/Itens por página/i);
 
     fireEvent.change(select, { target: { value: "20" } });
 
     expect(props.onPageSizeChange).toHaveBeenCalledWith(20);
   });
 
-  it("exibe colunas de acoes separadas e botoes corretos", () => {
+  it("exibe colunas de ações separadas e botões corretos", () => {
     renderTable();
 
     expect(
-      screen.getByRole("columnheader", { name: /Acoes do lancamento/i })
+      screen.getByRole("columnheader", { name: /Ações do lancamento/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("columnheader", { name: /Acoes do comprovante/i })
+      screen.getByRole("columnheader", { name: /Ações do comprovante/i })
     ).toBeInTheDocument();
 
     const editButtons = screen.getAllByRole("button", { name: /Editar/i });

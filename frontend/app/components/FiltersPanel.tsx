@@ -59,22 +59,22 @@ export function FiltersPanel({
           <input
             className={styles.input}
             type="text"
-            placeholder="Descricao ou tipo de pagamento"
+            placeholder="Descrição ou tipo de pagamento"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
           />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Tipo de lancamento</label>
+          <label className={styles.label}>Tipo de lançamento</label>
           <select
             className={styles.input}
             value={filterTransactionType}
             onChange={(e) => onTransactionTypeChange(e.target.value)}
           >
-            <option value="">Pagamentos e transferencias</option>
+            <option value="">Pagamentos e transferências</option>
             <option value="payment">Apenas pagamentos</option>
-            <option value="transfer">Apenas transferencias</option>
+            <option value="transfer">Apenas transferências</option>
           </select>
         </div>
 

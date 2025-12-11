@@ -7,7 +7,7 @@ const paymentTypes: PaymentType[] = [{ id: 1, name: "Folha" }];
 
 function baseProps(): React.ComponentProps<typeof PaymentForm> {
   return {
-    title: "Novo lancamento",
+    title: "Novo lançamento",
     transactionType: "payment",
     isAdmin: true,
     paymentTypes,
@@ -41,7 +41,7 @@ describe("PaymentForm", () => {
     expect(props.onSubmit).not.toHaveBeenCalled();
   });
 
-  it("exibe indicador verde quando ha comprovante", () => {
+  it("exibe indicador verde quando há comprovante", () => {
     const props = baseProps();
     render(<PaymentForm {...props} hasAttachedReceipt />);
 

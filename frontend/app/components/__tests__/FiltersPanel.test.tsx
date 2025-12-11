@@ -5,11 +5,11 @@ import type { PaymentType } from "../../../types/payment";
 
 const paymentTypes: PaymentType[] = [
   { id: 1, name: "Folha" },
-  { id: 2, name: "Combustivel" },
+  { id: 2, name: "Combustível" },
 ];
 
 describe("FiltersPanel", () => {
-  it("propaga busca e dispara aplicar/relatorio", () => {
+  it("propaga busca e dispara aplicar/relatório", () => {
     const onApply = vi.fn((e: React.FormEvent) => e.preventDefault());
     const onReport = vi.fn();
     const onSearchChange = vi.fn();
@@ -32,19 +32,22 @@ describe("FiltersPanel", () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText(/Descricao ou tipo de pagamento/i), {
-      target: { value: "Folha" },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText(/Descrição ou tipo de pagamento/i),
+      {
+        target: { value: "Folha" },
+      }
+    );
     expect(onSearchChange).toHaveBeenCalledWith("Folha");
 
     fireEvent.click(screen.getByRole("button", { name: /Aplicar/i }));
     expect(onApply).toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: /Gerar relatorio/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Gerar relatório/i }));
     expect(onReport).toHaveBeenCalled();
   });
 
-  it("nao exibe Aplicar quando onApply nao é fornecido", () => {
+  it("não exibe Aplicar quando onApply não é fornecido", () => {
     const onReport = vi.fn();
     const onSearchChange = vi.fn();
 
@@ -67,7 +70,7 @@ describe("FiltersPanel", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Aplicar/i })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Gerar relatorio/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Gerar relatório/i }));
     expect(onReport).toHaveBeenCalled();
   });
 });
