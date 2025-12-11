@@ -21,7 +21,7 @@ interface PaymentFormProps {
   onCancel: () => void;
   onAttachReceipt?: (file: File | null) => void;
   hasAttachedReceipt?: boolean;
-  dateInputRef?: React.RefObject<HTMLInputElement>;
+  dateInputRef?: React.RefObject<HTMLInputElement | null>;
   accent?: boolean;
 }
 
