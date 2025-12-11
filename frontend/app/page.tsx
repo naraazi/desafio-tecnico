@@ -218,7 +218,6 @@ export default function PaymentsPage() {
       if (startIso) params.append("startDate", startIso);
       if (endIso) params.append("endDate", endIso);
       if (searchTerm.trim()) params.append("search", searchTerm.trim());
-      if (searchTerm.trim()) params.append("search", searchTerm.trim());
       params.append("page", String(nextPage));
       params.append("pageSize", String(nextPageSize));
       params.append("sortBy", nextSortBy);
