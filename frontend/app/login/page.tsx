@@ -17,7 +17,7 @@ function LoginContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!API_URL) {
-      setError("API URL nao configurada.");
+      setError("API URL não configurada.");
       return;
     }
 
@@ -33,7 +33,7 @@ function LoginContent() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Credenciais invalidas");
+        throw new Error(data?.message || "Credenciais inválidas");
       }
 
       const from = searchParams.get("from") || "/";
@@ -49,7 +49,9 @@ function LoginContent() {
     <main className={styles.loginPage}>
       <div className={styles.loginCard}>
         <p className={styles.kicker}>Acesso restrito</p>
-        <h1 className={styles.title}>Financeiro Cartorio</h1>
+        <h1 className={styles.title}>
+          Cartório 1º Ofício de Notas e Registros de Imóveis de Santarém - PA
+        </h1>
         <p className={styles.subtitle}>
           Entre para gerenciar pagamentos e comprovantes.
         </p>
@@ -82,19 +84,10 @@ function LoginContent() {
 
           {error && <div className={styles.error}>{error}</div>}
 
-          <button
-            type="submit"
-            className={styles.button}
-            disabled={loading}
-          >
+          <button type="submit" className={styles.button} disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>
-
-        <div className={styles.hint}>
-          Crie usuarios admin/operator com o script{" "}
-          <code>npm run user:create</code> no backend.
-        </div>
       </div>
     </main>
   );
