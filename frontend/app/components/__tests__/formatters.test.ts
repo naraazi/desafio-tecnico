@@ -6,7 +6,7 @@ import {
   isoToDisplay,
   parseCurrency,
   sanitizeDateInput,
-} from "./formatters";
+} from "../../utils/formatters";
 
 describe("formatters", () => {
   it("formata datas para display e iso", () => {
