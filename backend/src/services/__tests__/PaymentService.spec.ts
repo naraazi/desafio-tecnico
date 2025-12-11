@@ -270,6 +270,22 @@ describe("PaymentService", () => {
     );
   });
 
+  it("rejeita update quando faltam campos obrigatorios", async () => {
+    paymentRepo.findOne.mockResolvedValue({
+      id: 1,
+      date: "2025-02-01",
+      paymentTypeId: 1,
+      description: "Item",
+      amount: 30,
+      transactionType: "payment",
+    });
+
+    await expect(
+      // simulando payload incompleto (PUT deve enviar recurso completo)
+      service.update(1, { description: "Parcial" } as any)
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
   it("report soma total usando query builder filtrado", async () => {
     const qb = {
       leftJoinAndSelect: vi.fn().mockReturnThis(),
