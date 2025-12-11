@@ -964,7 +964,6 @@ export default function PaymentsPage() {
                 setFilterEndDate(sanitizeDateInput(value))
               }
               onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
-              onApply={handleApplyFilters}
               onReport={fetchReport}
             />
           </div>

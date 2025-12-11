@@ -13,7 +13,7 @@ interface FiltersPanelProps {
   onStartDateChange: (value: string) => void;
   onEndDateChange: (value: string) => void;
   onSearchChange: (value: string) => void;
-  onApply: (e: React.FormEvent) => void;
+  onApply?: (e: React.FormEvent) => void;
   onReport?: (e?: React.FormEvent) => void;
 }
 
@@ -33,7 +33,7 @@ export function FiltersPanel({
   onReport,
 }: FiltersPanelProps) {
   function handleSubmit(e: React.FormEvent) {
-    onApply(e);
+    onApply?.(e);
   }
 
   function handleReport(e: React.FormEvent) {
@@ -121,16 +121,18 @@ export function FiltersPanel({
         </div>
 
         <div className={styles.actionsInline}>
-          <button
-            type="submit"
-            className={`${styles.btn} ${styles.btnPrimary}`}
-          >
-            Aplicar
-          </button>
+          {onApply && (
+            <button
+              type="submit"
+              className={`${styles.btn} ${styles.btnPrimary}`}
+            >
+              Aplicar
+            </button>
+          )}
           {onReport && (
             <button
               type="button"
-              className={`${styles.btn}`}
+              className={`${styles.btn} ${styles.btnPrimary}`}
               onClick={handleReport}
             >
               Gerar relatorio
