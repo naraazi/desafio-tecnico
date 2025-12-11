@@ -113,6 +113,8 @@ export default function PaymentsPage() {
   const [paymentTypeName, setPaymentTypeName] = useState<string>("");
   const [reportTotal, setReportTotal] = useState<number | null>(null);
   const [reportPayments, setReportPayments] = useState<Payment[]>([]);
+  const editingPayment =
+    editing ? payments.find((p) => p.id === editing.id) : null;
 
   const isAdmin = user?.role === "admin";
   type FetchPaymentsOptions = {
@@ -847,11 +849,11 @@ export default function PaymentsPage() {
       {activeSection === "lancamentos" && (
         <section className={styles.sectionBlock}>
           <div className={styles.split}>
-            <PaymentForm
-              title="Novo lancamento"
-              transactionType={selectedKind}
-              onTransactionTypeChange={(value) => setSelectedKind(value)}
-              isAdmin={isAdmin}
+          <PaymentForm
+            title="Novo lancamento"
+            transactionType={selectedKind}
+            onTransactionTypeChange={(value) => setSelectedKind(value)}
+            isAdmin={isAdmin}
               paymentTypes={paymentTypes}
               editingId={editing?.kind === selectedKind ? editing.id : null}
               formDate={formState[selectedKind].date}
@@ -881,6 +883,10 @@ export default function PaymentsPage() {
                   ...prev,
                   [selectedKind]: file,
                 }))
+              }
+              hasAttachedReceipt={
+                !!pendingReceipt[selectedKind] ||
+                !!(editing?.kind === selectedKind && editingPayment?.receiptUrl)
               }
               accent
             />

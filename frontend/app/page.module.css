@@ -467,6 +467,24 @@
   background: #e8f3fb;
 }
 
+.btnSuccess {
+  background: #e6f4ea;
+  border-color: #c5e7d0;
+  color: #0f9d58;
+  box-shadow: 0 10px 22px rgba(15, 157, 88, 0.16);
+}
+
+.btnSuccess::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #0f9d58;
+  box-shadow: 0 0 0 2px #d2ecd9;
+  margin-right: 8px;
+}
+
 .btnDanger {
   background: #fef2f2;
   border-color: #f3caca;

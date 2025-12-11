@@ -20,6 +20,7 @@ interface PaymentFormProps {
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   onAttachReceipt?: (file: File | null) => void;
+  hasAttachedReceipt?: boolean;
   accent?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function PaymentForm({
   onSubmit,
   onCancel,
   onAttachReceipt,
+  hasAttachedReceipt = false,
   accent = false,
 }: PaymentFormProps) {
   const isTransfer = transactionType === "transfer";
@@ -181,6 +183,19 @@ export function PaymentForm({
           >
             {submitLabel}
           </button>
+
+          <span
+            className={`${styles.btn} ${
+              hasAttachedReceipt ? styles.btnSuccess : styles.btnDanger
+            }`}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            onClick={(e) => e.preventDefault()}
+            tabIndex={-1}
+          >
+            {hasAttachedReceipt ? "Comprovante pronto" : "Sem comprovante"}
+          </span>
 
           {editingId && (
             <button
