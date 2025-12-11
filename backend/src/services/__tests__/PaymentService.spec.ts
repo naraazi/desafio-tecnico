@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { PaymentService } from "../PaymentService";
 import { AppError } from "../../errors/AppError";
 import { Payment } from "../../entities/Payment";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 type RepoMock<T> = {
   findOne: ReturnType<typeof vi.fn>;
@@ -20,6 +21,8 @@ const createRepoMock = <T>(): RepoMock<T> => ({
 });
 
 const { s3SendMock } = vi.hoisted(() => ({ s3SendMock: vi.fn() }));
+const { signedUrlMock } = vi.hoisted(() => ({ signedUrlMock: vi.fn() }));
+const { fileTypeMock } = vi.hoisted(() => ({ fileTypeMock: vi.fn() }));
 const { repoFactory } = vi.hoisted(() => ({
   repoFactory: <T>() => createRepoMock<T>(),
 }));
@@ -68,6 +71,15 @@ vi.mock("../../config/s3Client", () => ({
   isBucketPrivate: true,
 }));
 
+vi.mock("@aws-sdk/s3-request-presigner", () => ({
+  getSignedUrl: signedUrlMock,
+}));
+
+vi.mock("file-type", () => ({
+  __esModule: true,
+  default: { fromBuffer: fileTypeMock },
+}));
+
 describe("PaymentService", () => {
   const service = new PaymentService();
 
@@ -75,6 +87,8 @@ describe("PaymentService", () => {
     paymentRepo = repoFactory<Payment>();
     paymentTypeRepo = repoFactory<any>();
     s3SendMock.mockReset();
+    signedUrlMock.mockReset();
+    fileTypeMock.mockReset();
     vi.clearAllMocks();
   });
 
@@ -284,6 +298,32 @@ describe("PaymentService", () => {
       // simulando payload incompleto (PUT deve enviar recurso completo)
       service.update(1, { description: "Parcial" } as any)
     ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it("substitui comprovante apagando o anterior e gerando nova URL", async () => {
+    const payment = {
+      id: 1,
+      receiptPath: "receipts/1/old.pdf",
+    } as any;
+    paymentRepo.findOne.mockResolvedValue(payment);
+    paymentRepo.save.mockImplementation(async (p) => p);
+    fileTypeMock.mockResolvedValue({ mime: "application/pdf", ext: "pdf" });
+    signedUrlMock.mockResolvedValue("signed-url");
+
+    const buffer = Buffer.from("pdf");
+    const file: any = { size: 1024, buffer, mimetype: "application/pdf" };
+
+    const result = await service.uploadReceipt(1, file);
+
+    expect(s3SendMock).toHaveBeenCalledTimes(2);
+    expect(s3SendMock).toHaveBeenNthCalledWith(
+      1,
+      expect.any(DeleteObjectCommand)
+    );
+    expect(s3SendMock).toHaveBeenNthCalledWith(2, expect.any(PutObjectCommand));
+    expect(paymentRepo.save).toHaveBeenCalled();
+    expect(result.receiptUrl).toBe("signed-url");
+    expect(result.payment.receiptPath).toContain("receipts/1/");
   });
 
   it("report soma total usando query builder filtrado", async () => {

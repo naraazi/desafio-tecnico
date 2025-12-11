@@ -100,4 +100,27 @@ describe("PaymentsTable", () => {
 
     expect(props.onPageSizeChange).toHaveBeenCalledWith(20);
   });
+
+  it("exibe colunas de acoes separadas e botoes corretos", () => {
+    renderTable();
+
+    expect(
+      screen.getByRole("columnheader", { name: /Acoes do lancamento/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: /Acoes do comprovante/i })
+    ).toBeInTheDocument();
+
+    const editButtons = screen.getAllByRole("button", { name: /Editar/i });
+    const uploadLabels = screen.getAllByText(/Enviar comprovante/i);
+    expect(editButtons.length).toBeGreaterThan(0);
+    expect(uploadLabels.length).toBeGreaterThan(0);
+  });
+
+  it("mostra somente leitura quando actionsMode=view", () => {
+    renderTable({ actionsMode: "view" });
+
+    expect(screen.getAllByText(/Somente leitura/i).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /Editar/i })).toBeNull();
+  });
 });

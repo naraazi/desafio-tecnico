@@ -43,4 +43,31 @@ describe("FiltersPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Gerar relatorio/i }));
     expect(onReport).toHaveBeenCalled();
   });
+
+  it("nao exibe Aplicar quando onApply nao é fornecido", () => {
+    const onReport = vi.fn();
+    const onSearchChange = vi.fn();
+
+    render(
+      <FiltersPanel
+        paymentTypes={paymentTypes}
+        filterTypeId=""
+        filterTransactionType=""
+        filterStartDate=""
+        filterEndDate=""
+        searchTerm=""
+        onTypeChange={vi.fn()}
+        onTransactionTypeChange={vi.fn()}
+        onStartDateChange={vi.fn()}
+        onEndDateChange={vi.fn()}
+        onSearchChange={onSearchChange}
+        onApply={undefined}
+        onReport={onReport}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /Aplicar/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Gerar relatorio/i }));
+    expect(onReport).toHaveBeenCalled();
+  });
 });
