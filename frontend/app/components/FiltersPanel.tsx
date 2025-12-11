@@ -34,9 +34,11 @@ export function FiltersPanel({
 }: FiltersPanelProps) {
   function handleSubmit(e: React.FormEvent) {
     onApply(e);
-    if (onReport) {
-      onReport();
-    }
+  }
+
+  function handleReport(e: React.FormEvent) {
+    e.preventDefault();
+    onReport?.(e);
   }
 
   return (
@@ -125,6 +127,15 @@ export function FiltersPanel({
           >
             Aplicar
           </button>
+          {onReport && (
+            <button
+              type="button"
+              className={`${styles.btn}`}
+              onClick={handleReport}
+            >
+              Gerar relatorio
+            </button>
+          )}
         </div>
       </form>
     </section>

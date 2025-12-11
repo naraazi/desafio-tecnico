@@ -9,13 +9,16 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ): Response | void {
+  const errorObject = err as any;
+
   // 0) Erros do multer (upload)
-  if (err instanceof MulterError || (err as any)?.name === "MulterError") {
+  if (err instanceof MulterError || errorObject?.name === "MulterError") {
+    const multerErr = err as MulterError;
     const status =
-      err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+      multerErr.code === "LIMIT_FILE_SIZE" ? 413 : 400;
     return res.status(status).json({
       status: "error",
-      message: err.message || "Erro ao processar upload.",
+      message: multerErr.message || "Erro ao processar upload.",
     });
   }
 
@@ -37,7 +40,7 @@ export function errorHandler(
   }
 
   // 2) Erros de CORS rejeitado
-  if ((err as any)?.message === "Origin not allowed by CORS") {
+  if (errorObject?.message === "Origin not allowed by CORS") {
     return res.status(403).json({
       status: "error",
       message: "Origem nao permitida.",

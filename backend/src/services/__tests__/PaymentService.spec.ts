@@ -188,11 +188,19 @@ describe("PaymentService", () => {
         paymentTypeId: 1,
         description: "X",
         amount: 10,
+        transactionType: "payment",
       })
       .mockResolvedValueOnce({ id: 2 }); // simulando duplicado
+    paymentTypeRepo.findOne.mockResolvedValue({ id: 1 });
 
     await expect(
-      service.update(1, { description: "Novo" })
+      service.update(1, {
+        date: "2025-01-20",
+        paymentTypeId: 1,
+        description: "Novo",
+        amount: 10,
+        transactionType: "payment",
+      })
     ).rejects.toMatchObject({ statusCode: 409 });
   });
 
@@ -204,6 +212,7 @@ describe("PaymentService", () => {
         paymentTypeId: 1,
         description: "Desc",
         amount: 10,
+        transactionType: "payment",
       })
       .mockResolvedValueOnce(null); // nenhuma duplicata
     paymentTypeRepo.findOne.mockResolvedValue({ id: 2, name: "Novo Tipo" });
@@ -214,6 +223,7 @@ describe("PaymentService", () => {
       description: "  Ajuste  ",
       amount: 20.567,
       paymentTypeId: 2,
+      transactionType: "payment",
     });
 
     expect(updated).toMatchObject({
@@ -246,7 +256,13 @@ describe("PaymentService", () => {
     paymentTypeRepo.findOne.mockResolvedValue({ id: 1 });
     paymentRepo.save.mockImplementation(async (data) => data);
 
-    const updated = await service.update(1, { transactionType: "transfer" });
+    const updated = await service.update(1, {
+      date: "2025-02-01",
+      paymentTypeId: 1,
+      description: "Item",
+      amount: 30,
+      transactionType: "transfer",
+    });
 
     expect(updated.transactionType).toBe("transfer");
     expect(paymentRepo.save).toHaveBeenCalledWith(

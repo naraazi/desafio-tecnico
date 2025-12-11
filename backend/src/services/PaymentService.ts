@@ -371,6 +371,17 @@ export class PaymentService {
       throw new AppError("Lancamento nao encontrado.", 404);
     }
 
+    if (
+      !data ||
+      typeof data.date !== "string" ||
+      typeof data.paymentTypeId !== "number" ||
+      typeof data.description !== "string" ||
+      typeof data.amount !== "number" ||
+      typeof data.transactionType !== "string"
+    ) {
+      throw new AppError("Dados incompletos para atualizar o lancamento.", 400);
+    }
+
     const normalizedDate = this.normalizeDate(data.date);
     const normalizedDescription = this.normalizeDescription(data.description);
     const normalizedAmount = this.normalizeAmount(data.amount);
@@ -507,6 +518,7 @@ export class PaymentService {
     startDate?: string;
     endDate?: string;
     transactionType?: TransactionType | string;
+    search?: string | string[];
   }): Promise<{ payments: Payment[]; total: number }> {
     const query = this.buildBaseQuery(filters);
     query.orderBy("payment.date", "DESC");

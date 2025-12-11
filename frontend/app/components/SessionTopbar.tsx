@@ -5,7 +5,7 @@ export type NavKey = "home" | "lancamentos" | "tipos" | "relatorio";
 
 interface SessionTopbarProps {
   user: User;
-  navItems: { id: NavKey; label: string }[];
+  navItems?: { id: NavKey; label: string }[];
   activeNav: NavKey;
   onNavigate: (id: NavKey) => void;
   onLogout: () => void | Promise<void>;
@@ -14,7 +14,7 @@ interface SessionTopbarProps {
 
 export function SessionTopbar({
   user,
-  navItems,
+  navItems = [],
   activeNav,
   onNavigate,
   onLogout,
