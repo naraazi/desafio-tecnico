@@ -714,9 +714,6 @@ export default function PaymentsPage() {
       : filterTransactionType === "transfer"
       ? "Transferencias"
       : "Pagamentos e transferencias";
-  const recentPayments = [...payments]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
 
   return (
     <main className={styles.page}>
@@ -794,7 +791,6 @@ export default function PaymentsPage() {
               }
               onSearchChange={(value) => setSearchTerm(value.slice(0, 80))}
               onApply={handleApplyFilters}
-              onReport={fetchReport}
             />
           </div>
 
@@ -848,8 +844,8 @@ export default function PaymentsPage() {
       {activeSection === "lancamentos" && (
         <section className={styles.sectionBlock}>
           <div className={styles.split}>
-          <PaymentForm
-            title="Novo lancamento"
+            <PaymentForm
+              title="Novo lancamento"
             transactionType={selectedKind}
             onTransactionTypeChange={(value) => setSelectedKind(value)}
             isAdmin={isAdmin}
@@ -895,50 +891,32 @@ export default function PaymentsPage() {
             <div className={styles.sectionHeader}>
               <div>
                 <p className={styles.helperText}>Historico</p>
-                <h2>Ultimos registros</h2>
+                <h2>Todos os lancamentos</h2>
               </div>
-              <span className={styles.badgeLight}>3 mais recentes</span>
+              <span className={styles.badgeLight}>Com paginacao e acoes</span>
             </div>
 
-            {recentPayments.length === 0 ? (
-              <p className={styles.empty}>Nenhum lancamento encontrado.</p>
-            ) : (
-              <ul className={styles.historyList}>
-                {recentPayments.map((p) => (
-                  <li key={p.id} className={styles.historyItem}>
-                    <div className={styles.historyMain}>
-                      <div className={styles.historyTitle}>
-                        <span className={styles.historyDate}>
-                          {isoToDisplay(p.date)}
-                        </span>
-                        <span className={styles.status}>
-                          {p.transactionType === "transfer"
-                            ? "Transferencia"
-                            : "Pagamento"}
-                        </span>
-                        <strong>{p.description}</strong>
-                      </div>
-                      <span className={styles.historyAmount}>
-                        {formatCurrencyFromNumber(Number(p.amount))}
-                      </span>
-                    </div>
-                    <div className={styles.historyMeta}>
-                      <span>
-                        Tipo:{" "}
-                        {p.paymentType?.name ||
-                          paymentTypes.find((t) => t.id === p.paymentTypeId)
-                            ?.name ||
-                          "-"}
-                      </span>
-                      <span>
-                        Comprovante:{" "}
-                        {p.receiptUrl ? "Presente" : "Sem comprovante"}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <PaymentsTable
+              payments={payments}
+              paymentTypes={paymentTypes}
+              isAdmin={isAdmin}
+              loadingPayments={loadingPayments}
+              uploadingId={uploadingId}
+              deletingReceiptId={deletingReceiptId}
+              pagination={pagination}
+              totals={totals}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              actionsMode="full"
+              hideMainTitle
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onUpload={handleUploadReceipt}
+              onDeleteReceipt={handleDeleteReceipt}
+              onSort={handleSortChange}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </section>
         </section>
       )}

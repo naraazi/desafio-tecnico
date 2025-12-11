@@ -26,6 +26,7 @@ interface PaymentsTableProps {
   sortBy: PaymentSortField;
   sortOrder: "asc" | "desc";
   actionsMode?: "full" | "view";
+  hideMainTitle?: boolean;
   onEdit: (payment: Payment) => void;
   onDelete: (id: number) => void;
   onUpload: (paymentId: number, file?: File | null) => void;
@@ -54,6 +55,7 @@ export function PaymentsTable({
   sortBy,
   sortOrder,
   actionsMode = "full",
+  hideMainTitle = false,
   onEdit,
   onDelete,
   onUpload,
@@ -102,13 +104,11 @@ export function PaymentsTable({
 
   return (
     <section className={styles.panel}>
-      <div className={styles.sectionHeader}>
-        <div>
-          <p className={styles.helperText}>Visao geral</p>
-          <h2>Pagamentos e transferencias</h2>
+      {!hideMainTitle && (
+        <div className={styles.sectionHeader}>
+          <div />
         </div>
-        <span className={styles.badgeLight}>Dados listados</span>
-      </div>
+      )}
 
       {payments.length === 0 ? (
         <p className={styles.empty}>Nenhum lancamento encontrado.</p>
