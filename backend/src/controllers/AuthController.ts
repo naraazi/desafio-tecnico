@@ -43,7 +43,7 @@ export class AuthController {
   ): Promise<Response | void> {
     try {
       if (!req.user) {
-        return res.status(401).json({ message: "Nao autenticado." });
+        return res.status(401).json({ message: "Não autenticado." });
       }
 
       const profile = await authService.getProfile(req.user.id);

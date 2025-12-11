@@ -55,20 +55,20 @@ describe("PaymentTypeService", () => {
       return data;
     });
 
-    const created = await service.create({ name: "  Combustivel  " });
+    const created = await service.create({ name: "  Combustível  " });
 
     expect(paymentTypeRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "Combustivel" })
+      expect.objectContaining({ name: "Combustível" })
     );
-    expect(created).toMatchObject({ id: 1, name: "Combustivel" });
+    expect(created).toMatchObject({ id: 1, name: "Combustível" });
   });
 
-  it("nao permite criar nome duplicado", async () => {
+  it("não permite criar nome duplicado", async () => {
     paymentTypeRepo.findOne.mockResolvedValue({ id: 1, name: "Folha" });
 
-    await expect(
-      service.create({ name: "Folha" })
-    ).rejects.toBeInstanceOf(AppError);
+    await expect(service.create({ name: "Folha" })).rejects.toBeInstanceOf(
+      AppError
+    );
   });
 
   it("marca tipos em uso ao listar", async () => {
@@ -103,12 +103,12 @@ describe("PaymentTypeService", () => {
       .mockResolvedValueOnce({ id: 2, name: "Novo" }); // duplicado
     paymentRepo.count.mockResolvedValue(0);
 
-    await expect(
-      service.update(1, { name: "Novo" })
-    ).rejects.toBeInstanceOf(AppError);
+    await expect(service.update(1, { name: "Novo" })).rejects.toBeInstanceOf(
+      AppError
+    );
   });
 
-  it("nao permite atualizar tipo em uso", async () => {
+  it("não permite atualizar tipo em uso", async () => {
     paymentTypeRepo.findOne
       .mockResolvedValueOnce({ id: 1, name: "Antigo" })
       .mockResolvedValueOnce(null);
@@ -120,12 +120,12 @@ describe("PaymentTypeService", () => {
     expect(paymentTypeRepo.save).not.toHaveBeenCalled();
   });
 
-  it("lanВa erro ao atualizar inexistente", async () => {
+  it("lança erro ao atualizar inexistente", async () => {
     paymentTypeRepo.findOne.mockResolvedValue(null);
 
-    await expect(
-      service.update(999, { name: "Teste" })
-    ).rejects.toBeInstanceOf(AppError);
+    await expect(service.update(999, { name: "Teste" })).rejects.toBeInstanceOf(
+      AppError
+    );
   });
 
   it("deleta tipo existente", async () => {

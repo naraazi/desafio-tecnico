@@ -10,14 +10,16 @@ async function main() {
   const users = await repo.find({ order: { id: "ASC" } });
 
   if (users.length === 0) {
-    console.log("Nenhum usuario cadastrado.");
+    console.log("Nenhum usuário cadastrado.");
     await AppDataSource.destroy();
     return;
   }
 
-  console.log("Usuarios cadastrados:");
+  console.log("Usuários cadastrados:");
   users.forEach((u) => {
-    console.log(`- id=${u.id} | nome="${u.name}" | email="${u.email}" | role=${u.role}`);
+    console.log(
+      `- id=${u.id} | nome="${u.name}" | email="${u.email}" | role=${u.role}`
+    );
   });
 
   await AppDataSource.destroy();

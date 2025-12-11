@@ -14,8 +14,7 @@ export function errorHandler(
   // 0) Erros do multer (upload)
   if (err instanceof MulterError || errorObject?.name === "MulterError") {
     const multerErr = err as MulterError;
-    const status =
-      multerErr.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+    const status = multerErr.code === "LIMIT_FILE_SIZE" ? 413 : 400;
     return res.status(status).json({
       status: "error",
       message: multerErr.message || "Erro ao processar upload.",
@@ -43,7 +42,7 @@ export function errorHandler(
   if (errorObject?.message === "Origin not allowed by CORS") {
     return res.status(403).json({
       status: "error",
-      message: "Origem nao permitida.",
+      message: "Origem não permitida.",
     });
   }
 

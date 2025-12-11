@@ -93,7 +93,7 @@ describe("AuthService", () => {
       freshService.login("admin@email.com", "secret")
     ).rejects.toMatchObject({
       statusCode: 500,
-      message: "JWT_SECRET nao configurado.",
+      message: "JWT_SECRET não configurado.",
     });
 
     vi.resetModules();

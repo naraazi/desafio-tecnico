@@ -5,7 +5,10 @@ import bcrypt from "bcryptjs";
 import { AppDataSource } from "../database/data-source";
 import { getUserRepository } from "../repositories/UserRepository";
 
-function ask(question: string, options?: { silent?: boolean }): Promise<string> {
+function ask(
+  question: string,
+  options?: { silent?: boolean }
+): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -40,38 +43,48 @@ async function main() {
   await AppDataSource.initialize();
   const repo = getUserRepository();
 
-  const targetEmail = (await ask("Email do usuario a atualizar: ")).trim().toLowerCase();
+  const targetEmail = (await ask("Email do usuário a atualizar: "))
+    .trim()
+    .toLowerCase();
   if (!targetEmail) {
-    console.error("Email obrigatorio. Abortando.");
+    console.error("Email obrigatório. Abortando.");
     process.exit(1);
   }
 
   const user = await repo.findOne({ where: { email: targetEmail } });
   if (!user) {
-    console.error("Usuario nao encontrado.");
+    console.error("Usuário não encontrado.");
     process.exit(1);
   }
 
-  const currentPassword = await ask("Senha atual (para confirmar): ", { silent: true });
+  const currentPassword = await ask("Senha atual (para confirmar): ", {
+    silent: true,
+  });
   const ok = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!ok) {
     console.error("Senha atual incorreta. Abortando.");
     process.exit(1);
   }
 
-  const newName = (await ask(`Novo nome (enter para manter "${user.name}"): `)).trim();
+  const newName = (
+    await ask(`Novo nome (enter para manter "${user.name}"): `)
+  ).trim();
   const newEmailInput = (
     await ask(`Novo email (enter para manter "${user.email}"): `)
-  ).trim().toLowerCase();
+  )
+    .trim()
+    .toLowerCase();
 
-  const changePassword = (await ask("Deseja alterar a senha? (s/n): ")).trim().toLowerCase();
+  const changePassword = (await ask("Deseja alterar a senha? (s/n): "))
+    .trim()
+    .toLowerCase();
   let newPasswordHash = user.passwordHash;
 
   if (changePassword === "s" || changePassword === "sim") {
     const newPass = await ask("Nova senha: ", { silent: true });
     const confirm = await ask("Confirme a nova senha: ", { silent: true });
     if (newPass !== confirm) {
-      console.error("Senhas nao conferem. Abortando.");
+      console.error("Senhas não conferem. Abortando.");
       process.exit(1);
     }
     newPasswordHash = await bcrypt.hash(newPass, 10);
@@ -83,7 +96,7 @@ async function main() {
   if (finalEmail !== user.email) {
     const duplicate = await repo.findOne({ where: { email: finalEmail } });
     if (duplicate && duplicate.id !== user.id) {
-      console.error("Ja existe usuario com esse email. Abortando.");
+      console.error("Já existe usuário com esse email. Abortando.");
       process.exit(1);
     }
   }
@@ -93,7 +106,9 @@ async function main() {
   user.passwordHash = newPasswordHash;
 
   await repo.save(user);
-  console.log(`Usuario atualizado: id=${user.id}, nome="${user.name}", email="${user.email}"`);
+  console.log(
+    `Usuário atualizado: id=${user.id}, nome="${user.name}", email="${user.email}"`
+  );
 
   await AppDataSource.destroy();
 }

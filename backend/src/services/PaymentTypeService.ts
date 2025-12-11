@@ -16,7 +16,7 @@ export class PaymentTypeService {
 
     if (inUseCount > 0) {
       throw new AppError(
-        "Tipo esta em uso e nao pode ser alterado ou removido.",
+        "Tipo está em uso e não pode ser alterado ou removido.",
         409
       );
     }
@@ -27,7 +27,7 @@ export class PaymentTypeService {
     const normalizedName = data.name.trim();
 
     if (!normalizedName) {
-      throw new AppError("Nome do tipo de pagamento e obrigatorio.", 400);
+      throw new AppError("Nome do tipo de pagamento é obrigatório.", 400);
     }
 
     const existing = await paymentTypeRepository.findOne({
@@ -35,7 +35,7 @@ export class PaymentTypeService {
     });
 
     if (existing) {
-      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 409);
+      throw new AppError("Já existe um tipo de pagamento com esse nome.", 409);
     }
 
     const paymentType = paymentTypeRepository.create({
@@ -78,12 +78,12 @@ export class PaymentTypeService {
     const normalizedName = data.name.trim();
 
     if (!normalizedName) {
-      throw new AppError("Nome do tipo de pagamento e obrigatorio.", 400);
+      throw new AppError("Nome do tipo de pagamento é obrigatório.", 400);
     }
 
     const paymentType = await paymentTypeRepository.findOne({ where: { id } });
     if (!paymentType) {
-      throw new AppError("Tipo nao encontrado.", 404);
+      throw new AppError("Tipo não encontrado.", 404);
     }
 
     await this.ensureNotInUse(id);
@@ -93,7 +93,7 @@ export class PaymentTypeService {
     });
 
     if (duplicate && duplicate.id !== id) {
-      throw new AppError("Ja existe um tipo de pagamento com esse nome.", 409);
+      throw new AppError("Já existe um tipo de pagamento com esse nome.", 409);
     }
 
     paymentType.name = normalizedName;
@@ -107,7 +107,7 @@ export class PaymentTypeService {
 
     const paymentType = await paymentTypeRepository.findOne({ where: { id } });
     if (!paymentType) {
-      throw new AppError("Tipo nao encontrado.", 404);
+      throw new AppError("Tipo não encontrado.", 404);
     }
 
     await this.ensureNotInUse(id);

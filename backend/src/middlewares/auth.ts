@@ -35,11 +35,11 @@ export function requireAuth(
   const token = req.cookies?.[authCookieName] || tokenFromHeader;
 
   if (!token) {
-    throw new AppError("Nao autenticado.", 401);
+    throw new AppError("Não autenticado.", 401);
   }
 
   if (!jwtSecret) {
-    throw new AppError("JWT_SECRET nao configurado.", 500);
+    throw new AppError("JWT_SECRET não configurado.", 500);
   }
 
   try {
@@ -51,7 +51,7 @@ export function requireAuth(
     };
     return next();
   } catch {
-    throw new AppError("Sessao invalida ou expirada.", 401);
+    throw new AppError("Sessão inválida ou expirada.", 401);
   }
 }
 
@@ -62,7 +62,7 @@ export function requireRole(...allowedRoles: UserRole[]) {
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      throw new AppError("Sem permissao para executar esta acao.", 403);
+      throw new AppError("Sem permissão para executar esta ação.", 403);
     }
 
     return next();

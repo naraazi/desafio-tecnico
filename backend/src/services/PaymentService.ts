@@ -81,7 +81,7 @@ export class PaymentService {
     if (!type) return "payment";
     if (type === "payment" || type === "transfer") return type;
     throw new AppError(
-      "Tipo de lancamento invalido. Use payment ou transfer.",
+      "Tipo de lançamento inválido. Use payment ou transfer.",
       400
     );
   }
@@ -113,7 +113,7 @@ export class PaymentService {
         })
       );
     } catch (err) {
-      console.warn("Nao foi possivel remover comprovante no S3:", err);
+      console.warn("Não foi possível remover comprovante no S3:", err);
     }
   }
 
@@ -295,7 +295,7 @@ export class PaymentService {
     });
 
     if (!payment) {
-      throw new AppError("Lancamento nao encontrado.", 404);
+      throw new AppError("Lançamento não encontrado.", 404);
     }
 
     if (payment.receiptPath) {
@@ -321,7 +321,7 @@ export class PaymentService {
       where: { id: paymentTypeId },
     });
     if (!paymentTypeExists) {
-      throw new AppError("Tipo nao encontrado.", 404);
+      throw new AppError("Tipo não encontrado.", 404);
     }
 
     const existing = await paymentRepository.findOne({
@@ -336,7 +336,7 @@ export class PaymentService {
 
     if (existing) {
       throw new AppError(
-        "Ja existe um lancamento com mesma data, tipo, descricao e valor.",
+        "Já existe um lançamento com mesma data, tipo, descrição e valor.",
         409
       );
     }
@@ -368,7 +368,7 @@ export class PaymentService {
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Lancamento nao encontrado.", 404);
+      throw new AppError("Lançamento não encontrado.", 404);
     }
 
     if (
@@ -379,7 +379,7 @@ export class PaymentService {
       typeof data.amount !== "number" ||
       typeof data.transactionType !== "string"
     ) {
-      throw new AppError("Dados incompletos para atualizar o lancamento.", 400);
+      throw new AppError("Dados incompletos para atualizar o lançamento.", 400);
     }
 
     const normalizedDate = this.normalizeDate(data.date);
@@ -394,7 +394,7 @@ export class PaymentService {
       where: { id: normalizedPaymentTypeId },
     });
     if (!paymentTypeExists) {
-      throw new AppError("Tipo nao encontrado.", 404);
+      throw new AppError("Tipo não encontrado.", 404);
     }
 
     const duplicate = await paymentRepository.findOne({
@@ -410,7 +410,7 @@ export class PaymentService {
 
     if (duplicate) {
       throw new AppError(
-        "Ja existe um lancamento com mesma data, tipo, descricao e valor.",
+        "Já existe um lançamento com mesma data, tipo, descrição e valor.",
         409
       );
     }
@@ -428,18 +428,18 @@ export class PaymentService {
 
   async uploadReceipt(id: number, file?: Express.Multer.File) {
     if (!file) {
-      throw new AppError("Arquivo e obrigatorio.", 400);
+      throw new AppError("Arquivo é obrigatório.", 400);
     }
 
     if (!s3Bucket) {
-      throw new AppError("Bucket S3 nao configurado.", 500);
+      throw new AppError("Bucket S3 não configurado.", 500);
     }
 
     const paymentRepository = getPaymentRepository();
 
     const payment = await paymentRepository.findOne({ where: { id } });
     if (!payment) {
-      throw new AppError("Lancamento nao encontrado.", 404);
+      throw new AppError("Lançamento não encontrado.", 404);
     }
 
     // Remove comprovante anterior, se existir
@@ -452,7 +452,7 @@ export class PaymentService {
           })
         );
       } catch (err) {
-        console.warn("Nao foi possivel remover comprovante anterior:", err);
+        console.warn("Não foi possível remover comprovante anterior:", err);
       }
     }
 
@@ -461,7 +461,7 @@ export class PaymentService {
 
     if (!detectedType) {
       throw new AppError(
-        "Nao foi possivel identificar o tipo do arquivo.",
+        "Não foi possível identificar o tipo do arquivo.",
         400
       );
     }
@@ -472,7 +472,7 @@ export class PaymentService {
 
     if (!isAllowed) {
       throw new AppError(
-        "Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.",
+        "Tipo de arquivo não suportado. Use PDF, JPG ou PNG.",
         400
       );
     }
@@ -502,7 +502,7 @@ export class PaymentService {
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Lancamento nao encontrado.", 404);
+      throw new AppError("Lançamento não encontrado.", 404);
     }
 
     // remove comprovante associado, se houver
@@ -535,18 +535,18 @@ export class PaymentService {
 
   async deleteReceipt(id: number) {
     if (!s3Bucket) {
-      throw new AppError("Bucket S3 nao configurado.", 500);
+      throw new AppError("Bucket S3 não configurado.", 500);
     }
 
     const paymentRepository = getPaymentRepository();
     const payment = await paymentRepository.findOne({ where: { id } });
 
     if (!payment) {
-      throw new AppError("Lancamento nao encontrado.", 404);
+      throw new AppError("Lançamento não encontrado.", 404);
     }
 
     if (!payment.receiptPath) {
-      throw new AppError("Pagamento nao possui comprovante.", 404);
+      throw new AppError("Pagamento não possui comprovante.", 404);
     }
 
     await this.deleteS3Object(payment.receiptPath);

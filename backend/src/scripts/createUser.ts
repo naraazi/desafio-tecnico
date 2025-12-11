@@ -5,7 +5,10 @@ import { AppDataSource } from "../database/data-source";
 import { AuthService } from "../services/AuthService";
 import { UserRole } from "../entities/User";
 
-function ask(question: string, options?: { silent?: boolean }): Promise<string> {
+function ask(
+  question: string,
+  options?: { silent?: boolean }
+): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -38,13 +41,13 @@ function ask(question: string, options?: { silent?: boolean }): Promise<string> 
 }
 
 async function promptRole(): Promise<UserRole> {
-  console.log("Selecione a role do usuario:");
+  console.log("Selecione a role do usuário:");
   console.log("1) admin");
   console.log("2) operator");
-  const choice = await ask("Opcao (1 ou 2): ");
+  const choice = await ask("Opçao (1 ou 2): ");
   if (choice.trim() === "1") return "admin";
   if (choice.trim() === "2") return "operator";
-  console.log("Opcao invalida. Tente novamente.\n");
+  console.log("Opçao inválida. Tente novamente.\n");
   return promptRole();
 }
 
@@ -58,7 +61,7 @@ async function main() {
   const confirm = await ask("Confirme a senha: ", { silent: true });
 
   if (password !== confirm) {
-    console.error("Senhas nao conferem. Abortando.");
+    console.error("Senhas não conferem. Abortando.");
     process.exit(1);
   }
 
@@ -66,14 +69,16 @@ async function main() {
 
   try {
     const user = await authService.createUser({
-      name: name.trim() || "Usuario",
+      name: name.trim() || "Usuário",
       email,
       password,
       role,
     });
-    console.log(`Usuario criado com sucesso (id=${user.id}, role=${user.role})`);
+    console.log(
+      `Usuário criado com sucesso (id=${user.id}, role=${user.role})`
+    );
   } catch (err: any) {
-    console.error("Erro ao criar usuario:", err?.message || err);
+    console.error("Erro ao criar usuário:", err?.message || err);
   } finally {
     await AppDataSource.destroy();
   }

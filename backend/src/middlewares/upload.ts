@@ -10,7 +10,9 @@ export const upload = multer({
     if (allowedMime.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new AppError("Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.", 400));
+      cb(
+        new AppError("Tipo de arquivo não suportado. Use PDF, JPG ou PNG.", 400)
+      );
     }
   },
 });

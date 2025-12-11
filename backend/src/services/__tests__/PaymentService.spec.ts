@@ -92,7 +92,7 @@ describe("PaymentService", () => {
     vi.clearAllMocks();
   });
 
-  it("cria pagamento normalizando data, descricao e valor", async () => {
+  it("cria pagamento normalizando data, descrição e valor", async () => {
     paymentTypeRepo.findOne.mockResolvedValue({ id: 1, name: "Tipo" });
     paymentRepo.findOne.mockResolvedValue(null);
     paymentRepo.create.mockImplementation((data) => data);
@@ -136,7 +136,7 @@ describe("PaymentService", () => {
     const payment = await service.create({
       date: "2025-01-21",
       paymentTypeId: 1,
-      description: "Transferencia entre contas",
+      description: "Transferência entre contas",
       amount: 200,
       transactionType: "transfer",
     });
@@ -152,7 +152,7 @@ describe("PaymentService", () => {
     expect(payment.transactionType).toBe("transfer");
   });
 
-  it("rejeita transactionType invalido", async () => {
+  it("rejeita transactionType inválido", async () => {
     paymentTypeRepo.findOne.mockResolvedValue({ id: 1, name: "Tipo" });
     paymentRepo.findOne.mockResolvedValue(null);
 
@@ -162,12 +162,12 @@ describe("PaymentService", () => {
         paymentTypeId: 1,
         description: "Teste",
         amount: 50,
-        transactionType: "bonus" as any,
+        transactionType: "bônus" as any,
       })
     ).rejects.toMatchObject({ statusCode: 400 });
   });
 
-  it("lanca erro 404 se tipo de pagamento nao existe", async () => {
+  it("lança erro 404 se tipo de pagamento não existe", async () => {
     paymentTypeRepo.findOne.mockResolvedValue(null);
 
     await expect(
@@ -284,7 +284,7 @@ describe("PaymentService", () => {
     );
   });
 
-  it("rejeita update quando faltam campos obrigatorios", async () => {
+  it("rejeita update quando faltam campos obrigatórios", async () => {
     paymentRepo.findOne.mockResolvedValue({
       id: 1,
       date: "2025-02-01",
@@ -331,10 +331,12 @@ describe("PaymentService", () => {
       leftJoinAndSelect: vi.fn().mockReturnThis(),
       andWhere: vi.fn().mockReturnThis(),
       orderBy: vi.fn().mockReturnThis(),
-      getMany: vi.fn().mockResolvedValue([
-        { id: 1, amount: 10 } as Payment,
-        { id: 2, amount: 5.5 } as Payment,
-      ]),
+      getMany: vi
+        .fn()
+        .mockResolvedValue([
+          { id: 1, amount: 10 } as Payment,
+          { id: 2, amount: 5.5 } as Payment,
+        ]),
     };
     paymentRepo.createQueryBuilder.mockReturnValue(qb as any);
 
@@ -345,7 +347,7 @@ describe("PaymentService", () => {
     expect(result.payments).toHaveLength(2);
   });
 
-  it("lista pagamentos com paginacao, ordenacao e totais", async () => {
+  it("lista pagamentos com paginação, ordenação e totais", async () => {
     const payments = [
       { id: 10, amount: 12.34 } as Payment,
       { id: 11, amount: 18.06 } as Payment,
@@ -373,7 +375,7 @@ describe("PaymentService", () => {
     expect(result.totals.pageAmount).toBe(30.4);
   });
 
-  it("aplica busca case-insensitive e ordenacao padrao por data DESC", async () => {
+  it("aplica busca case-insensitive e ordenação padrão por data DESC", async () => {
     const qbMock = createQueryBuilderMock([], { count: "0", amount: "0" });
     paymentRepo.createQueryBuilder.mockReturnValue(qbMock.base as any);
 
@@ -398,7 +400,7 @@ describe("PaymentService", () => {
     );
   });
 
-  it("clampa pagina quando solicitada acima do total disponivel", async () => {
+  it("clampa página quando solicitada acima do total disponível", async () => {
     const qbMock = createQueryBuilderMock([{ id: 1 } as Payment], {
       count: "1",
       amount: "100.00",
