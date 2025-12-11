@@ -20,7 +20,7 @@ export function ReportPanel({
       <div className={styles.sectionHeader}>
         <div>
           <p className={styles.helperText}>Resumo</p>
-          <h2>Relatorio por periodo</h2>
+          <h2>Relatório por período</h2>
         </div>
         <span className={styles.badgeLight}>
           {loadingReport ? "Calculando" : "Total e lista"}
@@ -29,13 +29,13 @@ export function ReportPanel({
 
       {reportTotal === null && reportPayments.length === 0 ? (
         <p className={styles.muted}>
-          Use os filtros e clique em "Gerar relatorio".
+          Use os filtros e clique em "Gerar relatório".
         </p>
       ) : (
         <>
           <div className={styles.reportSummary}>
             <div className={styles.reportCard}>
-              <span className={styles.reportLabel}>Total no periodo</span>
+              <span className={styles.reportLabel}>Total no período</span>
               <strong className={styles.reportValue}>
                 {Number(reportTotal || 0).toLocaleString("pt-BR", {
                   style: "currency",
@@ -46,10 +46,10 @@ export function ReportPanel({
           </div>
 
           {loadingReport ? (
-            <p className={styles.loading}>Gerando relatorio...</p>
+            <p className={styles.loading}>Gerando relatório...</p>
           ) : reportPayments.length === 0 ? (
             <p className={styles.empty}>
-              Nenhum lancamento no periodo selecionado.
+              Nenhum lançamento no período selecionado.
             </p>
           ) : (
             <div className={styles.tableWrapper}>
@@ -59,7 +59,7 @@ export function ReportPanel({
                     <th>Data</th>
                     <th>Natureza</th>
                     <th>Tipo</th>
-                    <th>Descricao</th>
+                    <th>Descrição</th>
                     <th>Valor</th>
                   </tr>
                 </thead>
@@ -70,7 +70,7 @@ export function ReportPanel({
                       <td>
                         <span className={styles.status}>
                           {p.transactionType === "transfer"
-                            ? "Transferencia"
+                            ? "Transferência"
                             : "Pagamento"}
                         </span>
                       </td>

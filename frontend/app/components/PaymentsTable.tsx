@@ -78,7 +78,9 @@ export function PaymentsTable({
     return (
       <button
         type="button"
-        className={`${styles.sortButton} ${active ? styles.sortButtonActive : ""}`}
+        className={`${styles.sortButton} ${
+          active ? styles.sortButtonActive : ""
+        }`}
         onClick={() => onSort(field)}
       >
         {label}
@@ -92,12 +94,12 @@ export function PaymentsTable({
       <section className={styles.panel}>
         <div className={styles.sectionHeader}>
           <div>
-            <p className={styles.helperText}>Visao geral</p>
-            <h2>Pagamentos e transferencias</h2>
+            <p className={styles.helperText}>Visão geral</p>
+            <h2>Pagamentos e transferências</h2>
           </div>
           <span className={styles.badgeLight}>Atualizando</span>
         </div>
-        <p className={styles.loading}>Carregando lancamentos...</p>
+        <p className={styles.loading}>Carregando lançamentos...</p>
       </section>
     );
   }
@@ -111,7 +113,7 @@ export function PaymentsTable({
       )}
 
       {payments.length === 0 ? (
-        <p className={styles.empty}>Nenhum lancamento encontrado.</p>
+        <p className={styles.empty}>Nenhum lançamento encontrado.</p>
       ) : (
         <div className={styles.tableWrapper}>
           <table className={styles.table}>
@@ -120,10 +122,10 @@ export function PaymentsTable({
                 <th>{renderSortable("Data", "date")}</th>
                 <th>{renderSortable("Natureza", "transactionType")}</th>
                 <th>{renderSortable("Tipo", "paymentType")}</th>
-                <th>{renderSortable("Descricao", "description")}</th>
+                <th>{renderSortable("Descrição", "description")}</th>
                 <th>{renderSortable("Valor", "amount")}</th>
-                <th>Acoes do lancamento</th>
-                <th>Acoes do comprovante</th>
+                <th>Ações do lançamento</th>
+                <th>Ações do comprovante</th>
               </tr>
             </thead>
             <tbody>
@@ -133,13 +135,14 @@ export function PaymentsTable({
                   <td>
                     <span className={styles.status}>
                       {p.transactionType === "transfer"
-                        ? "Transferencia"
+                        ? "Transferência"
                         : "Pagamento"}
                     </span>
                   </td>
                   <td>
                     {p.paymentType?.name ||
-                      paymentTypes.find((t) => t.id === p.paymentTypeId)?.name ||
+                      paymentTypes.find((t) => t.id === p.paymentTypeId)
+                        ?.name ||
                       "-"}
                   </td>
                   <td>{p.description}</td>
@@ -216,7 +219,9 @@ export function PaymentsTable({
                         <span className={styles.muted}>Sem comprovante</span>
                       )}
                       {!isAdmin && !p.receiptUrl && !viewOnly && (
-                        <span className={styles.muted}>Apenas admin altera</span>
+                        <span className={styles.muted}>
+                          Apenas admin altera
+                        </span>
                       )}
                     </div>
                   </td>
@@ -229,7 +234,7 @@ export function PaymentsTable({
 
       <div className={styles.tableControls}>
         <label className={styles.pageSizeSelector}>
-          Itens por pagina
+          Itens por página
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
@@ -251,14 +256,14 @@ export function PaymentsTable({
             Anterior
           </button>
           <span className={styles.paginationInfo}>
-            Pag. {pageLabel} / {totalPagesLabel}
+            Pág. {pageLabel} / {totalPagesLabel}
           </span>
           <button
             className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
             onClick={() => onPageChange(page + 1)}
             disabled={!canNext}
           >
-            Proxima
+            Próxima
           </button>
         </div>
       </div>

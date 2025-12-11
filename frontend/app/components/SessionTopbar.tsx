@@ -26,7 +26,7 @@ export function SessionTopbar({
         <div className={styles.logoBadge}>
           <img
             src="/logo.png"
-            alt="Logo do cartorio"
+            alt="Logo do cartório do primeiro ofício de notas e registros de imóveis de Santarém"
             width={68}
             height={68}
             className={styles.logoImage}
@@ -34,13 +34,13 @@ export function SessionTopbar({
           />
         </div>
         <div className={styles.sessionDetails}>
-          <p className={styles.helperText}>Sessao ativa</p>
+          <p className={styles.helperText}>Sessão ativa</p>
           <h2>{user.name}</h2>
           <p className={styles.muted}>{user.email}</p>
         </div>
       </div>
 
-      <nav className={styles.navLinks} aria-label="Navegacao principal">
+      <nav className={styles.navLinks} aria-label="Navegação principal">
         {navItems.map((item) => (
           <button
             key={item.id}

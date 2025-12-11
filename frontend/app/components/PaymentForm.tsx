@@ -49,11 +49,11 @@ export function PaymentForm({
 }: PaymentFormProps) {
   const isTransfer = transactionType === "transfer";
   const sectionTitle = editingId
-    ? `Editar ${isTransfer ? "transferencia" : "pagamento"}`
+    ? `Editar ${isTransfer ? "transferência" : "pagamento"}`
     : title;
 
   const submitLabel = editingId
-    ? "Salvar edicao"
+    ? "Salvar edição"
     : isTransfer
     ? "Criar registro"
     : "Criar pagamento";
@@ -64,7 +64,7 @@ export function PaymentForm({
     >
       <div className={styles.sectionHeader}>
         <div>
-          <p className={styles.helperText}>Lancamentos</p>
+          <p className={styles.helperText}>Lançamentos</p>
           <h2>{sectionTitle}</h2>
         </div>
         <span className={styles.badgeLight}>
@@ -72,8 +72,8 @@ export function PaymentForm({
             ? editingId
               ? "Editando registro"
               : isTransfer
-              ? "Nova transferencia"
-              : "Cadastro rapido"
+              ? "Nova transferência"
+              : "Cadastro rápido"
             : "Apenas admin altera"}
         </span>
       </div>
@@ -81,13 +81,13 @@ export function PaymentForm({
       {!isAdmin && (
         <div className={styles.lockedMessage}>
           Apenas administradores podem criar ou editar pagamentos ou
-          transferencias.
+          transferências.
         </div>
       )}
 
       <form onSubmit={onSubmit} className={styles.formGrid}>
         <div className={styles.field}>
-          <label className={styles.label}>Natureza do lancamento</label>
+          <label className={styles.label}>Natureza do lançamento</label>
           <select
             className={styles.input}
             value={transactionType}
@@ -99,7 +99,7 @@ export function PaymentForm({
             }
           >
             <option value="payment">Pagamento</option>
-            <option value="transfer">Transferencia</option>
+            <option value="transfer">Transferência</option>
           </select>
         </div>
 
@@ -136,14 +136,14 @@ export function PaymentForm({
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>Descricao</label>
+          <label className={styles.label}>Descrição</label>
           <input
             className={styles.input}
             type="text"
             value={formDescription}
             disabled={!isAdmin}
             onChange={(e) => onDescriptionChange(e.target.value)}
-            placeholder="Ex: Pagamento de folha - janeiro/2025"
+            placeholder="Ex: Pagamento de folha"
           />
         </div>
 

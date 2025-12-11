@@ -45,7 +45,9 @@ export function PaymentTypeManager({
   }, [searchTerm, pageSize, paymentTypes.length]);
 
   const totalPages =
-    filteredTypes.length === 0 ? 1 : Math.max(1, Math.ceil(filteredTypes.length / pageSize));
+    filteredTypes.length === 0
+      ? 1
+      : Math.max(1, Math.ceil(filteredTypes.length / pageSize));
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * pageSize;
   const currentTypes = filteredTypes.slice(startIndex, startIndex + pageSize);
@@ -81,7 +83,7 @@ export function PaymentTypeManager({
             value={paymentTypeName}
             disabled={!isAdmin}
             onChange={(e) => onNameChange(e.target.value)}
-            placeholder="Ex: Manutencao predial"
+            placeholder="Ex: Manutenção predial"
           />
         </div>
         <div className={styles.actions}>
@@ -111,13 +113,13 @@ export function PaymentTypeManager({
           <input
             className={styles.input}
             type="text"
-            placeholder="Ex: Pix, Combustivel..."
+            placeholder="Ex: Pix"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className={styles.field}>
-          <label className={styles.label}>Itens por pagina</label>
+          <label className={styles.label}>Itens por página</label>
           <select
             className={styles.input}
             value={pageSize}
@@ -142,7 +144,7 @@ export function PaymentTypeManager({
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Acoes</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -166,7 +168,7 @@ export function PaymentTypeManager({
                           disabled={!isAdmin || !!type.inUse}
                           title={
                             type.inUse
-                              ? "Tipo em uso por pagamentos, nao pode ser editado."
+                              ? "Tipo em uso por pagamentos, não pode ser editado."
                               : undefined
                           }
                         >
@@ -178,7 +180,7 @@ export function PaymentTypeManager({
                           disabled={!isAdmin || !!type.inUse}
                           title={
                             type.inUse
-                              ? "Tipo em uso por pagamentos, nao pode ser excluido."
+                              ? "Tipo em uso por pagamentos, não pode ser excluído."
                               : undefined
                           }
                         >
@@ -207,14 +209,14 @@ export function PaymentTypeManager({
               Anterior
             </button>
             <span className={styles.paginationInfo}>
-              Pag. {currentPage} / {totalPages}
+              Pág. {currentPage} / {totalPages}
             </span>
             <button
               className={`${styles.btn} ${styles.btnSmall} ${styles.btnSecondary}`}
               onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={currentPage === totalPages}
             >
-              Proxima
+              Próxima
             </button>
           </div>
         </div>
