@@ -135,7 +135,7 @@ export function FiltersPanel({
               className={`${styles.btn} ${styles.btnPrimary}`}
               onClick={handleReport}
             >
-              Gerar relatorio
+              Gerar relatório
             </button>
           )}
         </div>

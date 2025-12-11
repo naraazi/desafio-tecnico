@@ -100,7 +100,7 @@ describe("PaymentsTable", () => {
     expect(props.onPageChange).toHaveBeenCalledWith(2);
   });
 
-  it("altera quantidade por pagina", () => {
+  it("altera quantidade por página", () => {
     const props = renderTable();
     const select = screen.getByLabelText(/Itens por página/i);
 
@@ -113,7 +113,7 @@ describe("PaymentsTable", () => {
     renderTable();
 
     expect(
-      screen.getByRole("columnheader", { name: /Ações do lancamento/i })
+      screen.getByRole("columnheader", { name: /Ações do lançamento/i })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("columnheader", { name: /Ações do comprovante/i })

@@ -43,7 +43,9 @@ describe("FiltersPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: /Aplicar/i }));
     expect(onApply).toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: /Gerar relatório/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Gerar relatório/i })
+    );
     expect(onReport).toHaveBeenCalled();
   });
 
@@ -70,7 +72,9 @@ describe("FiltersPanel", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Aplicar/i })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Gerar relatório/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Gerar relatório/i })
+    );
     expect(onReport).toHaveBeenCalled();
   });
 });
