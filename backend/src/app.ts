@@ -3,6 +3,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import routes from "./routes";
+import { AppError } from "./errors/AppError";
 
 const app = express();
 
@@ -17,7 +18,7 @@ app.use(
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("Origin not allowed by CORS"));
+      return callback(new AppError("Origin not allowed by CORS", 403));
     },
     credentials: true,
   })

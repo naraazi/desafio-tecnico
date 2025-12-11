@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { isCelebrateError } from "celebrate";
+import multer, { MulterError } from "multer";
 import { AppError } from "../errors/AppError";
 
 export function errorHandler(
@@ -8,6 +9,16 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ): Response | void {
+  // 0) Erros do multer (upload)
+  if (err instanceof MulterError || (err as any)?.name === "MulterError") {
+    const status =
+      err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+    return res.status(status).json({
+      status: "error",
+      message: err.message || "Erro ao processar upload.",
+    });
+  }
+
   // 1) Erros de validação do Celebrate
   if (isCelebrateError(err)) {
     const details: string[] = [];
@@ -25,7 +36,15 @@ export function errorHandler(
     });
   }
 
-  // 2) Erros conhecidos da aplicação (regra de negócio)
+  // 2) Erros de CORS rejeitado
+  if ((err as any)?.message === "Origin not allowed by CORS") {
+    return res.status(403).json({
+      status: "error",
+      message: "Origem nao permitida.",
+    });
+  }
+
+  // 3) Erros conhecidos da aplicação (regra de negócio)
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       status: "error",
@@ -33,7 +52,7 @@ export function errorHandler(
     });
   }
 
-  // 3) Erros desconhecidos (bug, problema de infra, etc.)
+  // 4) Erros desconhecidos (bug, problema de infra, etc.)
   console.error(err);
 
   return res.status(500).json({

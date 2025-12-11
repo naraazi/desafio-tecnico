@@ -355,11 +355,11 @@ export class PaymentService {
   async update(
     id: number,
     data: {
-      date?: string;
-      paymentTypeId?: number;
-      description?: string;
-      amount?: number;
-      transactionType?: TransactionType;
+      date: string;
+      paymentTypeId: number;
+      description: string;
+      amount: number;
+      transactionType: TransactionType;
     }
   ): Promise<Payment> {
     const paymentRepository = getPaymentRepository();
@@ -371,31 +371,19 @@ export class PaymentService {
       throw new AppError("Lancamento nao encontrado.", 404);
     }
 
-    const normalizedDate = data.date
-      ? this.normalizeDate(data.date)
-      : payment.date;
-    const normalizedDescription = data.description
-      ? this.normalizeDescription(data.description)
-      : payment.description;
-    const normalizedAmount =
-      typeof data.amount === "number"
-        ? this.normalizeAmount(data.amount)
-        : payment.amount;
-    const normalizedTransactionType = data.transactionType
-      ? this.normalizeTransactionType(data.transactionType)
-      : payment.transactionType;
-    const normalizedPaymentTypeId =
-      typeof data.paymentTypeId === "number"
-        ? data.paymentTypeId
-        : payment.paymentTypeId;
+    const normalizedDate = this.normalizeDate(data.date);
+    const normalizedDescription = this.normalizeDescription(data.description);
+    const normalizedAmount = this.normalizeAmount(data.amount);
+    const normalizedTransactionType = this.normalizeTransactionType(
+      data.transactionType
+    );
+    const normalizedPaymentTypeId = data.paymentTypeId;
 
-    if (typeof data.paymentTypeId === "number") {
-      const paymentTypeExists = await paymentTypeRepository.findOne({
-        where: { id: data.paymentTypeId },
-      });
-      if (!paymentTypeExists) {
-        throw new AppError("Tipo nao encontrado.", 404);
-      }
+    const paymentTypeExists = await paymentTypeRepository.findOne({
+      where: { id: normalizedPaymentTypeId },
+    });
+    if (!paymentTypeExists) {
+      throw new AppError("Tipo nao encontrado.", 404);
     }
 
     const duplicate = await paymentRepository.findOne({

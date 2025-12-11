@@ -14,12 +14,12 @@ export const createPaymentValidation = celebrate({
 
 export const updatePaymentValidation = celebrate({
   [Segments.BODY]: Joi.object({
-    date: Joi.string().isoDate().optional(),
-    paymentTypeId: Joi.number().integer().optional(),
-    description: Joi.string().min(3).optional(),
-    amount: Joi.number().positive().optional(),
-    transactionType: Joi.string().valid("payment", "transfer").optional(),
-  }).or("date", "paymentTypeId", "description", "amount", "transactionType"), // exige pelo menos um campo
+    date: Joi.string().isoDate().required(),
+    paymentTypeId: Joi.number().integer().required(),
+    description: Joi.string().min(3).required(),
+    amount: Joi.number().positive().required(),
+    transactionType: Joi.string().valid("payment", "transfer").required(),
+  }),
 });
 
 export const paymentIdParamValidation = celebrate({

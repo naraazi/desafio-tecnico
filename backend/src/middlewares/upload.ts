@@ -1,4 +1,5 @@
 import multer from "multer";
+import { AppError } from "../errors/AppError";
 
 const allowedMime = ["image/jpeg", "image/png", "application/pdf"];
 
@@ -9,7 +10,7 @@ export const upload = multer({
     if (allowedMime.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Tipo de arquivo não suportado. Use PDF, JPG ou PNG."));
+      cb(new AppError("Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.", 400));
     }
   },
 });
