@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title:
-    "Controle Financeiro - Cartorio 1º Oficio de Notas e Registro de Imoveis de Santarem - PA",
+    "Controle Financeiro - Cartório 1º Ofício de Notas e Registro de Imóveis de Santarém - PA",
   description:
-    "Controle financeiro do Cartorio 1º Oficio de Notas e Registro de Imoveis de Santarem - PA",
+    "Controle financeiro do cartório 1º ofício de notas e registro de imóveis de Santarém",
 };
 
 export default function RootLayout({

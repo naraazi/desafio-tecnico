@@ -33,9 +33,9 @@ type SectionKey = NavKey;
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const NAV_ITEMS: { id: SectionKey; label: string }[] = [
   { id: "home", label: "Home" },
-  { id: "lancamentos", label: "Lancamentos" },
+  { id: "lancamentos", label: "Lançamentos" },
   { id: "tipos", label: "Tipos" },
-  { id: "relatorio", label: "Gerar relatorio" },
+  { id: "relatorio", label: "Relatório" },
 ];
 
 function redirectToLogin() {
@@ -115,8 +115,9 @@ export default function PaymentsPage() {
   const [reportPayments, setReportPayments] = useState<Payment[]>([]);
   const formSectionRef = useRef<HTMLDivElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
-  const editingPayment =
-    editing ? payments.find((p) => p.id === editing.id) : null;
+  const editingPayment = editing
+    ? payments.find((p) => p.id === editing.id)
+    : null;
 
   const isAdmin = user?.role === "admin";
   type FetchPaymentsOptions = {
@@ -139,7 +140,7 @@ export default function PaymentsPage() {
 
   async function fetchCurrentUser() {
     if (!API_URL) {
-      setError("API URL nao configurada.");
+      setError("API URL não configurada.");
       setLoadingUser(false);
       return;
     }
@@ -156,13 +157,13 @@ export default function PaymentsPage() {
       }
 
       if (!res.ok) {
-        throw new Error("Erro ao carregar usuario autenticado.");
+        throw new Error("Erro ao carregar usuário autenticado.");
       }
 
       const data = await res.json();
       setUser(data.user);
     } catch (err: any) {
-      setError(err.message || "Erro inesperado ao carregar usuario.");
+      setError(err.message || "Erro inesperado ao carregar usuário.");
     } finally {
       setLoadingUser(false);
     }
@@ -170,7 +171,7 @@ export default function PaymentsPage() {
 
   async function fetchPaymentTypes() {
     if (!API_URL) {
-      setError("API URL nao configurada.");
+      setError("API URL não configurada.");
       return;
     }
     try {
@@ -199,7 +200,7 @@ export default function PaymentsPage() {
 
   async function fetchPayments(options?: FetchPaymentsOptions) {
     if (!API_URL) {
-      setError("API URL nao configurada.");
+      setError("API URL não configurada.");
       return;
     }
     try {
@@ -289,7 +290,7 @@ export default function PaymentsPage() {
     e.preventDefault();
     if (!isAdmin) {
       alert(
-        "Apenas administradores podem criar ou editar pagamentos/transferencias."
+        "Apenas administradores podem criar ou editar pagamentos/transferências."
       );
       return;
     }
@@ -299,7 +300,7 @@ export default function PaymentsPage() {
       return;
     }
     if (!displayToIso(date)) {
-      alert("Data invalida. Use DD/MM/AAAA.");
+      alert("Data inválida. Use DD/MM/AAAA.");
       return;
     }
 
@@ -308,7 +309,7 @@ export default function PaymentsPage() {
 
       const amountValue = parseCurrency(amount);
       if (Number.isNaN(amountValue)) {
-        throw new Error("Valor invalido.");
+        throw new Error("Valor inválido.");
       }
 
       const body = {
@@ -344,7 +345,7 @@ export default function PaymentsPage() {
         throw new Error(
           data?.message ||
             (isEditing
-              ? "Erro ao atualizar lancamento"
+              ? "Erro ao atualizar lançamento"
               : "Erro ao criar lancamento")
         );
       }
@@ -358,7 +359,7 @@ export default function PaymentsPage() {
       await fetchPayments();
       resetForm(kind);
     } catch (err: any) {
-      alert(err.message || "Erro inesperado ao salvar lancamento");
+      alert(err.message || "Erro inesperado ao salvar lançamento");
     }
   }
 
@@ -466,7 +467,10 @@ export default function PaymentsPage() {
         amount: formatCurrencyFromNumber(Number(payment.amount)),
       },
     }));
-    formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    formSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
     setTimeout(() => {
       dateInputRef.current?.focus();
     }, 150);
@@ -474,7 +478,7 @@ export default function PaymentsPage() {
 
   async function handleDelete(id: number) {
     if (!isAdmin) return;
-    if (!confirm("Tem certeza que deseja excluir este lancamento?")) return;
+    if (!confirm("Tem certeza que deseja excluir este lançamento?")) return;
 
     try {
       const res = await fetch(`${API_URL}/payments/${id}`, {
@@ -489,7 +493,7 @@ export default function PaymentsPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Erro ao excluir lancamento");
+        throw new Error(data?.message || "Erro ao excluir lançamento");
       }
       const remainingItems = Math.max(pagination.totalItems - 1, 0);
       const maxPage =
@@ -499,7 +503,7 @@ export default function PaymentsPage() {
       const targetPage = Math.min(pagination.page, maxPage);
       await fetchPayments({ page: targetPage });
     } catch (err: any) {
-      alert(err.message || "Erro inesperado ao excluir lancamento");
+      alert(err.message || "Erro inesperado ao excluir lançamento");
     }
   }
 
@@ -509,7 +513,7 @@ export default function PaymentsPage() {
 
     const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Tipo de arquivo nao suportado. Use PDF, JPG ou PNG.");
+      alert("Tipo de arquivo não suportado. Use PDF, JPG ou PNG.");
       return;
     }
 
@@ -559,7 +563,7 @@ export default function PaymentsPage() {
 
   async function handleDeleteReceipt(paymentId: number) {
     if (!isAdmin) return;
-    if (!confirm("Remover comprovante deste lancamento?")) return;
+    if (!confirm("Remover comprovante deste lançamento?")) return;
     try {
       setDeletingReceiptId(paymentId);
       setError(null);
@@ -650,14 +654,14 @@ export default function PaymentsPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Erro ao gerar relatorio");
+        throw new Error(data?.message || "Erro ao gerar relatório");
       }
 
       const data: PaymentReportResponse = await res.json();
       setReportTotal(data.total);
       setReportPayments(data.payments);
     } catch (err: any) {
-      setError(err.message || "Erro inesperado ao gerar relatorio");
+      setError(err.message || "Erro inesperado ao gerar relatório");
     } finally {
       setLoadingReport(false);
     }
@@ -672,7 +676,7 @@ export default function PaymentsPage() {
         credentials: "include",
       });
     } catch (err: any) {
-      setError(err.message || "Erro ao encerrar sessao");
+      setError(err.message || "Erro ao encerrar sessão");
     } finally {
       setLoggingOut(false);
       redirectToLogin();
@@ -682,7 +686,7 @@ export default function PaymentsPage() {
   if (loadingUser) {
     return (
       <main className={styles.page}>
-        <p className={styles.loading}>Carregando sessao...</p>
+        <p className={styles.loading}>Carregando sessão...</p>
       </main>
     );
   }
@@ -691,7 +695,7 @@ export default function PaymentsPage() {
     return (
       <main className={styles.page}>
         <div className={styles.errorBanner}>
-          Sessao expirada ou usuario nao encontrado. Faca login novamente.
+          Sessão expirada ou usuário nao encontrado. Faça login novamente.
         </div>
         <div className={styles.actions}>
           <Link href="/login" className={`${styles.btn} ${styles.btnPrimary}`}>
@@ -718,8 +722,8 @@ export default function PaymentsPage() {
     filterTransactionType === "payment"
       ? "Pagamentos"
       : filterTransactionType === "transfer"
-      ? "Transferencias"
-      : "Pagamentos e transferencias";
+      ? "Transferências"
+      : "Pagamentos e transferências";
 
   return (
     <main className={styles.page}>
@@ -740,10 +744,10 @@ export default function PaymentsPage() {
             <div className={styles.heroText}>
               <p className={styles.kicker}>Financeiro</p>
               <h1 className={styles.heroTitle}>
-                Controle de pagamentos e transferencias
+                Controle de pagamentos e transferências
               </h1>
               <p className={styles.heroSubtitle}>
-                Cartorio 1o Oficio de Notas e Registros de Imoveis de Santarem -
+                Cartório 1º Ofício de Notas e Registro de Imóveis de Santarém -
                 PA
               </p>
             </div>
@@ -760,7 +764,7 @@ export default function PaymentsPage() {
               </div>
               <div className={styles.heroStat}>
                 <span className={styles.heroStatLabel}>
-                  Lancamentos listados
+                  Lançamentos listados
                 </span>
                 <span className={styles.heroStatValue}>
                   {pagination.totalItems || payments.length}
@@ -802,10 +806,10 @@ export default function PaymentsPage() {
 
           <section className={styles.homeBoard}>
             <div className={`${styles.panel} ${styles.homePrimary}`}>
-              <p className={styles.helperText}>Visao geral</p>
-              <h2>Pagamentos e transferencias</h2>
+              <p className={styles.helperText}>Visão geral</p>
+              <h2>Pagamentos e transferências</h2>
               <p className={styles.homeLead}>
-                Acompanhe os lancamentos e o saldo geral sem sair da tela
+                Acompanhe os lançamentos e o saldo geral sem sair da tela
                 inicial. Resumo rapido dos valores listados e do total geral.
               </p>
               <div className={styles.statGrid}>
@@ -852,7 +856,7 @@ export default function PaymentsPage() {
           <div className={styles.split}>
             <div ref={formSectionRef}>
               <PaymentForm
-                title="Novo lancamento"
+                title="Novo lançamento"
                 transactionType={selectedKind}
                 onTransactionTypeChange={(value) => setSelectedKind(value)}
                 isAdmin={isAdmin}
@@ -863,7 +867,11 @@ export default function PaymentsPage() {
                 formDescription={formState[selectedKind].description}
                 formAmount={formState[selectedKind].amount}
                 onDateChange={(value) =>
-                  updateFormField(selectedKind, "date", sanitizeDateInput(value))
+                  updateFormField(
+                    selectedKind,
+                    "date",
+                    sanitizeDateInput(value)
+                  )
                 }
                 onTypeChange={(value) =>
                   updateFormField(selectedKind, "typeId", value)
@@ -888,7 +896,9 @@ export default function PaymentsPage() {
                 }
                 hasAttachedReceipt={
                   !!pendingReceipt[selectedKind] ||
-                  !!(editing?.kind === selectedKind && editingPayment?.receiptUrl)
+                  !!(
+                    editing?.kind === selectedKind && editingPayment?.receiptUrl
+                  )
                 }
                 dateInputRef={dateInputRef}
                 accent
@@ -899,7 +909,7 @@ export default function PaymentsPage() {
           <section className={styles.panel}>
             <div className={styles.sectionHeader}>
               <div>
-                <h2>Todos os lancamentos</h2>
+                <h2>Todos os lançamentos</h2>
               </div>
             </div>
 
